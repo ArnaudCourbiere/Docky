@@ -9,8 +9,13 @@
 *.class
 
 # generated files
+#lib/
 bin/
 gen/
+
+# gradle generated files/dir
+build/
+.gradle
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -27,3 +32,4 @@ proguard/
 *.ipr
 *.iws
 .idea/
+
