@@ -1,17 +1,22 @@
 package me.courbiere.android.docky;
 
 import android.app.Activity;
-import android.app.ActionBar;
+
 import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
+
+import me.courbiere.android.docky.service.BootService;
+
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 public class MainActivity extends Activity {
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +51,15 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void startDocky(View v) {
+        LOGD(TAG, "startDocky()");
+        startService(new Intent(this, BootService.class));
+    }
+
+    public void stopDocky(View v) {
+        LOGD(TAG, "stopDocky()");
+        stopService(new Intent(this, BootService.class));
+    }
     /**
      * A placeholder fragment containing a simple view.
      */

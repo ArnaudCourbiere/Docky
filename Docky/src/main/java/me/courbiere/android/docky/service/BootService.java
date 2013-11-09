@@ -2,7 +2,16 @@ package me.courbiere.android.docky.service;
 
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.PixelFormat;
 import android.os.IBinder;
+import android.view.Gravity;
+import android.view.View;
+import android.view.WindowManager;
+
+import me.courbiere.android.docky.R;
+import me.courbiere.android.docky.ui.view.DockView;
+
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * Bootstraps the dock View and Gesture Listeners.
@@ -11,34 +20,29 @@ public class BootService extends Service {
     private static final String TAG = "BootService";
 
     /**
+     * Dock.
+     */
+    private View mDock;
+
+    /**
      * Called by the system when the service is first created.  Do not call this method directly.
      */
     @Override
     public void onCreate() {
         // TODO
-    }
+        LOGD(TAG, "onCreate()");
+        mDock = new DockView(this);
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT);
 
-    /**
-     * Called by the system every time a client explicitly starts the service by calling
-     * {@link android.content.Context#startService}, providing the arguments it supplied and a
-     * unique integer token representing the start request.  Do not call this method directly.
-     *
-     * @param intent  The Intent supplied to {@link android.content.Context#startService},
-     *                as given.  This may be null if the service is being restarted after
-     *                its process has gone away, and it had previously returned anything
-     *                except {@link #START_STICKY_COMPATIBILITY}.
-     * @param flags   Additional data about this start request.  Currently either
-     *                0, {@link #START_FLAG_REDELIVERY}, or {@link #START_FLAG_RETRY}.
-     * @param startId A unique integer representing this specific request to
-     *                start.  Use with {@link #stopSelfResult(int)}.
-     * @return The return value indicates what semantics the system should
-     * use for the service's current started state.  It may be one of the
-     * constants associated with the {@link #START_CONTINUATION_MASK} bits.
-     * @see #stopSelfResult(int)
-     */
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
+        params.gravity = Gravity.CENTER;
+        params.setTitle(getString(R.string.app_name));
+        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        wm.addView(mDock, params);
     }
 
     /**
@@ -65,5 +69,10 @@ public class BootService extends Service {
     @Override
     public void onDestroy() {
         // TODO
+        LOGD(TAG, "onDestroy()");
+        if (mDock != null) {
+            ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(mDock);
+            mDock = null;
+        }
     }
 }
