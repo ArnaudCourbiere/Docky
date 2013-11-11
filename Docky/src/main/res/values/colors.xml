@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dock_background">#E8000000</color>
+    <color name="dock_seperarator">#E8444444</color>
+</resources>
