@@ -48,12 +48,12 @@ public class BootService extends Service {
 
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 dockWidth,
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT);
 
-        params.gravity = Gravity.CENTER_VERTICAL | Gravity.RIGHT;
+        params.gravity = Gravity.TOP | Gravity.RIGHT;
         params.setTitle(getString(R.string.app_name));
         WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         wm.addView(mDock, params);

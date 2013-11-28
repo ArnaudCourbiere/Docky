@@ -60,6 +60,18 @@ public class MainActivity extends Activity {
         LOGD(TAG, "stopDocky()");
         stopService(new Intent(this, BootService.class));
     }
+
+    public void pickApp(View v) {
+        LOGD(TAG, "pickApp()");
+        /*
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        */
+        Intent intent = new Intent(Intent.ACTION_PICK_ACTIVITY);
+        //intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        startActivityForResult(intent, 1234);
+    }
+
     /**
      * A placeholder fragment containing a simple view.
      */
