@@ -3,6 +3,7 @@ package me.courbiere.android.docky;
 import android.app.Activity;
 
 import android.app.Fragment;
+import android.app.Notification;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;

@@ -1,6 +1,9 @@
 package me.courbiere.android.docky.service;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
@@ -18,6 +21,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.ui.adapter.DockItemArrayAdapter;
 import me.courbiere.android.docky.ui.view.DockView;
@@ -43,7 +47,9 @@ public class BootService extends Service {
         // TODO
         LOGD(TAG, "onCreate()");
 
+        goToForeground();
         initListView();
+
         final int dockWidth = (int) getResources().getDimension(R.dimen.dock_width);
 
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
@@ -57,6 +63,20 @@ public class BootService extends Service {
         params.setTitle(getString(R.string.app_name));
         WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         wm.addView(mDock, params);
+    }
+
+    public void goToForeground() {
+        final Notification.Builder notificationBuilder = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText("Aloha!");
+
+        final Intent notificationIntent = new Intent(this, MainActivity.class);
+        final PendingIntent notificationPendingIntent = PendingIntent.getActivity(
+                this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        notificationBuilder.setContentIntent(notificationPendingIntent);
+        startForeground(1337, notificationBuilder.getNotification());
     }
 
     public void initListView() {
