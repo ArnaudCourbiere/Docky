@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -35,9 +36,24 @@ public class BootService extends Service {
     private static final String TAG = "BootService";
 
     /**
+     * Window Manager.
+     */
+    private WindowManager mWindowManager;
+
+    /**
+     * Dock's layout params.
+     */
+    private WindowManager.LayoutParams mParams;
+
+    /**
      * Dock.
      */
     private ListView mDock;
+
+    /**
+     * Gesture Detector used to swipe Dock in and out.
+     */
+    private GestureDetector mDetector;
 
     /**
      * Called by the system when the service is first created.  Do not call this method directly.
@@ -49,37 +65,42 @@ public class BootService extends Service {
 
         goToForeground();
         initListView();
+        initListeners();
 
         final int dockWidth = (int) getResources().getDimension(R.dimen.dock_width);
 
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+        mParams = new WindowManager.LayoutParams(
                 dockWidth,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                //WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
-        params.gravity = Gravity.TOP | Gravity.RIGHT;
-        params.setTitle(getString(R.string.app_name));
-        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        wm.addView(mDock, params);
+        mParams.gravity = Gravity.RIGHT;
+        mParams.setTitle(getString(R.string.app_name));
+        mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        mWindowManager.addView(mDock, mParams);
     }
 
-    public void goToForeground() {
+    private void goToForeground() {
         final Notification.Builder notificationBuilder = new Notification.Builder(this)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText("Aloha!");
+
+        final Notification notification = notificationBuilder.getNotification();
+        notification.priority |= Notification.PRIORITY_MIN;
 
         final Intent notificationIntent = new Intent(this, MainActivity.class);
         final PendingIntent notificationPendingIntent = PendingIntent.getActivity(
                 this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         notificationBuilder.setContentIntent(notificationPendingIntent);
-        startForeground(1337, notificationBuilder.getNotification());
+        startForeground(1337, notification);
     }
 
-    public void initListView() {
+    private void initListView() {
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         mDock = (ListView) inflater.inflate(R.layout.dock_layout, null);
         final String[] values = new String[] { "Arnaud", "Julien", "Andre", "Dominique" };
@@ -89,12 +110,58 @@ public class BootService extends Service {
         }
         final ArrayAdapter<String> adapter = new DockItemArrayAdapter(this, R.layout.dock_item_layout, list);
         mDock.setAdapter(adapter);
+    }
+
+    private void initListeners() {
+        /*
+        mDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent downEvent, MotionEvent motionEvent, float distanceX, float distanceY) {
+                LOGD(TAG, "here");
+                return true;
+            }
+
+            @Override
+            public boolean onFling(MotionEvent downEvent, MotionEvent motionEvent, float velocityX, float velocityY) {
+                LOGD(TAG, "here");
+                return true;
+            }
+        });
+        */
 
         mDock.setOnTouchListener(new View.OnTouchListener() {
+            private float mInitialTouchX;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                LOGD(TAG, "Touch");
+                //return mDetector.onTouchEvent(event);
+
+                final int action = event.getActionMasked();
+
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        mInitialTouchX = event.getRawX();
+                        return false;
+
+                    case MotionEvent.ACTION_MOVE:
+                        int distance = (int) (mInitialTouchX - event.getRawX());
+                        mInitialTouchX = event.getRawX();
+                        mParams.x += distance;
+
+                        if (mParams.x < 0) {
+                            mParams.x = 0;
+                        }
+
+                        LOGD(TAG, "NEW X: " + Integer.toString(mParams.x));
+                        mWindowManager.updateViewLayout(mDock, mParams);
+                        return true;
+                }
+
                 return false;
             }
         });
