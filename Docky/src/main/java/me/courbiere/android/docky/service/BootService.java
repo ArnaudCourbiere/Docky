@@ -17,7 +17,9 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -44,6 +46,11 @@ public class BootService extends Service {
      * Dock's layout params.
      */
     private WindowManager.LayoutParams mParams;
+
+    /**
+     * Dock Layout.
+     */
+    private RelativeLayout mDockLayout;
 
     /**
      * Dock.
@@ -80,7 +87,7 @@ public class BootService extends Service {
         mParams.gravity = Gravity.RIGHT;
         mParams.setTitle(getString(R.string.app_name));
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        mWindowManager.addView(mDock, mParams);
+        mWindowManager.addView(mDockLayout, mParams);
     }
 
     private void goToForeground() {
@@ -102,7 +109,8 @@ public class BootService extends Service {
 
     private void initListView() {
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-        mDock = (ListView) inflater.inflate(R.layout.dock_layout, null);
+        mDockLayout = (RelativeLayout) inflater.inflate(R.layout.dock_layout, null);
+        mDock = (ListView) mDockLayout.findViewById(R.id.dock);
         final String[] values = new String[] { "Arnaud", "Julien", "Andre", "Dominique" };
         final ArrayList<String> list = new ArrayList<String>();
         for (int i = 0; i < values.length; i++) {
@@ -135,6 +143,8 @@ public class BootService extends Service {
         */
 
         mDock.setOnTouchListener(new View.OnTouchListener() {
+            private int mRightBound = 0;
+            private int mLeftBound = mDock.getWidth();
             private float mInitialTouchX;
 
             @Override
@@ -149,16 +159,32 @@ public class BootService extends Service {
                         return false;
 
                     case MotionEvent.ACTION_MOVE:
-                        int distance = (int) (mInitialTouchX - event.getRawX());
+                        int distance = (int) (event.getRawX() - mInitialTouchX);
                         mInitialTouchX = event.getRawX();
-                        mParams.x += distance;
+                        mRightBound += distance;
+                        mLeftBound += distance;
+                        final RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) mDock.getLayoutParams();
+                        int leftMargin = lp.leftMargin + distance;
+                        int rightMargin = lp.rightMargin - distance;
 
-                        if (mParams.x < 0) {
-                            mParams.x = 0;
+                        if (leftMargin < 0) {
+                            leftMargin = 0;
+                            rightMargin = 0;
+                        }
+                        if (leftMargin > mDock.getWidth()) {
+                            leftMargin = mDock.getWidth();
+                            leftMargin = -mDock.getWidth();
                         }
 
-                        LOGD(TAG, "NEW X: " + Integer.toString(mParams.x));
-                        mWindowManager.updateViewLayout(mDock, mParams);
+                        lp.setMargins(leftMargin, lp.topMargin, rightMargin, lp.bottomMargin);
+                        mDock.setLayoutParams(lp);
+
+                        //if (mParams.x < 0) {
+                            //mParams.x = 0;
+                        //}
+
+                        //mDock.layout(mLeftBound, 0, mRightBound, 0);
+                        //mWindowManager.updateViewLayout(mDock, mParams);
                         return true;
                 }
 
@@ -192,9 +218,9 @@ public class BootService extends Service {
     public void onDestroy() {
         // TODO
         LOGD(TAG, "onDestroy()");
-        if (mDock != null) {
-            ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(mDock);
-            mDock = null;
+        if (mDockLayout != null) {
+            ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(mDockLayout);
+            mDockLayout = null;
         }
     }
 }
