@@ -4,6 +4,8 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
 
     <dimen name="dock_width">80dp</dimen>
+    <dimen name="drag_handle_width">10dp</dimen>
+    <dimen name="dock_layout_width">90dp</dimen>
     <dimen name="dock_item_width">80dp</dimen>
     <dimen name="dock_item_height">80dp</dimen>
 
