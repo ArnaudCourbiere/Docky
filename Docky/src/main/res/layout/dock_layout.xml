@@ -5,13 +5,13 @@
     android:layout_width="@dimen/dock_layout_width"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:background="#555">
+    android:background="#11000000">
 
     <View
         android:id="@+id/drag_handle"
         android:layout_width="@dimen/drag_handle_width"
         android:layout_height="match_parent"
-        android:background="@color/blue">
+        android:background="#11000000">
     </View>
 
     <ListView

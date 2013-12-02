@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
@@ -126,7 +127,7 @@ public class BootService extends Service {
         mDockLayout = (LinearLayout) inflater.inflate(R.layout.dock_layout, null);
         mDock = (ListView) mDockLayout.findViewById(R.id.dock);
         mDragHandle = mDockLayout.findViewById(R.id.drag_handle);
-        final String[] values = new String[] { "Arnaud", "Julien", "Andre", "Dominique" };
+        final String[] values = new String[] { "", "", "", "", "", "" };
         final ArrayList<String> list = new ArrayList<String>();
         for (int i = 0; i < values.length; i++) {
             list.add(values[i]);
@@ -165,6 +166,8 @@ public class BootService extends Service {
 
                 int leftMargin;
                 int rightMargin;
+                final int dockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
+                final int dragHandleWidth = (int) getResources().getDimension(R.dimen.drag_handle_width);
 
                 final WindowManager.LayoutParams dockLayoutLp =
                         (WindowManager.LayoutParams) mDockLayout.getLayoutParams();
@@ -179,6 +182,11 @@ public class BootService extends Service {
                     case MotionEvent.ACTION_DOWN:
                         LOGD(TAG, "DOWN");
                         mInitialTouchX = event.getRawX();
+
+                        /*
+                        dockLayoutLp.width = dockLayoutWidth;
+                        mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
+                        */
 
                         if (v.getId() == R.id.drag_handle) {
                             return true;
@@ -202,19 +210,14 @@ public class BootService extends Service {
                             rightMargin = -mDock.getWidth();
                         }
 
-                        /*
                         dockLp.setMargins(leftMargin, dockLp.topMargin, rightMargin, dockLp.bottomMargin);
                         mDock.setLayoutParams(dockLp);
 
                         // Update drag handle position.
                         dragHandleLp.setMargins(leftMargin, dragHandleLp.topMargin, rightMargin, dragHandleLp.bottomMargin);
                         mDragHandle.setLayoutParams(dragHandleLp);
-                        */
 
                         /*
-                        final int dockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
-                        final int dragHandleWidth = (int) getResources().getDimension(R.dimen.drag_handle_width);
-
                         if (dockLayoutLp.width - distance > dockLayoutWidth) {
                             dockLayoutLp.width = dockLayoutWidth;
                         } else if (dockLayoutLp.width - distance < dragHandleWidth) {
@@ -226,8 +229,10 @@ public class BootService extends Service {
                         mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
                         */
 
+                        /*
                         dockLayoutLp.x -= distance;
                         mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
+                        */
 
                         return true;
 
@@ -239,19 +244,24 @@ public class BootService extends Service {
                         if (leftMargin > mDock.getWidth() / 2) {
                             leftMargin = mDock.getWidth();
                             rightMargin = -mDock.getWidth();
+
+                            /*
+                            leftMargin = 0;
+                            rightMargin = 0;
+                            dockLayoutLp.width = dragHandleWidth;
+                            mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
+                            */
                         } else {
                             leftMargin = 0;
                             rightMargin = 0;
                         }
 
-                        /*
                         dockLp.setMargins(leftMargin, dockLp.topMargin, rightMargin, dockLp.bottomMargin);
                         mDock.setLayoutParams(dockLp);
 
                         // Update drag handle position.
                         dragHandleLp.setMargins(leftMargin, dragHandleLp.topMargin, rightMargin, dragHandleLp.bottomMargin);
                         mDragHandle.setLayoutParams(dragHandleLp);
-                        */
 
                         return false;
                 }
