@@ -92,7 +92,9 @@ public class BootService extends Service {
                 dockWidth,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                        | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 //WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
@@ -208,31 +210,24 @@ public class BootService extends Service {
                         dragHandleLp.setMargins(leftMargin, dragHandleLp.topMargin, rightMargin, dragHandleLp.bottomMargin);
                         mDragHandle.setLayoutParams(dragHandleLp);
                         */
+
+                        /*
                         final int dockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
                         final int dragHandleWidth = (int) getResources().getDimension(R.dimen.drag_handle_width);
-                        int width;
 
                         if (dockLayoutLp.width - distance > dockLayoutWidth) {
-                            width = dockLayoutWidth;
+                            dockLayoutLp.width = dockLayoutWidth;
                         } else if (dockLayoutLp.width - distance < dragHandleWidth) {
-                            width = dragHandleWidth;
+                            dockLayoutLp.width = dragHandleWidth;
                         } else {
-                            width = dockLayoutLp.width - distance;
+                            dockLayoutLp.width -= distance;
                         }
 
-                        WindowManager.LayoutParams wlp = new WindowManager.LayoutParams(
-                                width,
-                                WindowManager.LayoutParams.MATCH_PARENT,
-                                WindowManager.LayoutParams.TYPE_PHONE,
-                                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-                                //WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                                PixelFormat.TRANSLUCENT);
+                        mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
+                        */
 
-                        wlp.gravity = Gravity.RIGHT;
-
-                        //mWindowManager.removeViewImmediate(mDockLayout);
-                        //mWindowManager.addView(mDockLayout, dockLayoutLp);
-                        mWindowManager.updateViewLayout(mDockLayout, wlp);
+                        dockLayoutLp.x -= distance;
+                        mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
 
                         return true;
 
@@ -267,6 +262,14 @@ public class BootService extends Service {
 
         mDock.setOnTouchListener(mDragListener);
         mDragHandle.setOnTouchListener(mDragListener);
+
+        mDockLayout.setOnTouchListener(new View.OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return false;
+            }
+        });
     }
 
     /**
