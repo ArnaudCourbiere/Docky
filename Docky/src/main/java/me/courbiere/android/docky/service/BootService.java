@@ -1,36 +1,29 @@
 package me.courbiere.android.docky.service;
 
+import android.animation.ValueAnimator;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.app.TaskStackBuilder;
 import android.content.Intent;
 import android.graphics.PixelFormat;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.WindowManager;
-import android.widget.AbsListView;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 
 import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.ui.adapter.DockItemArrayAdapter;
-import me.courbiere.android.docky.ui.view.DockView;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
 
@@ -40,15 +33,18 @@ import static me.courbiere.android.docky.util.LogUtils.*;
 public class BootService extends Service {
     private static final String TAG = "BootService";
 
+    private static final int DOCK_CLOSED = 0;
+    private static final int DOCK_OPENED = 1;
+
+    /**
+     * Dock state
+     */
+    private int mDockState;
+
     /**
      * Window Manager.
      */
     private WindowManager mWindowManager;
-
-    /**
-     * Dock's layout params.
-     */
-    private WindowManager.LayoutParams mParams;
 
     /**
      * Dock Layout.
@@ -64,6 +60,21 @@ public class BootService extends Service {
      * Drag handle.
      */
     private View mDragHandle;
+
+    /**
+     * Dock Layout layout params.
+     */
+    private WindowManager.LayoutParams mDockLayoutLp;
+
+    /**
+     * Dock layout parameters.
+     */
+    private LinearLayout.LayoutParams mDockLp;
+
+    /**
+     * Drag Handle layout parameters.
+     */
+    private LinearLayout.LayoutParams mDragHandleLp;
 
     /**
      * Gesture Detector used to swipe Dock in and out.
@@ -87,22 +98,24 @@ public class BootService extends Service {
         initListView();
         initListeners();
 
+        mDockState = DOCK_OPENED;
+
         final int dockWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
 
-        mParams = new WindowManager.LayoutParams(
+        mDockLayoutLp = new WindowManager.LayoutParams(
                 dockWidth,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                         | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
-                        | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-                //WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
-        mParams.gravity = Gravity.RIGHT;
-        mParams.setTitle(getString(R.string.app_name));
+        mDockLayoutLp.gravity = Gravity.RIGHT;
+        mDockLayoutLp.setTitle(getString(R.string.app_name));
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        mWindowManager.addView(mDockLayout, mParams);
+        mWindowManager.addView(mDockLayout, mDockLayoutLp);
     }
 
     private void goToForeground() {
@@ -124,9 +137,15 @@ public class BootService extends Service {
 
     private void initListView() {
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+
         mDockLayout = (LinearLayout) inflater.inflate(R.layout.dock_layout, null);
         mDock = (ListView) mDockLayout.findViewById(R.id.dock);
         mDragHandle = mDockLayout.findViewById(R.id.drag_handle);
+
+        mDockLp = (LinearLayout.LayoutParams) mDock.getLayoutParams();
+        mDragHandleLp = (LinearLayout.LayoutParams) mDragHandle.getLayoutParams();
+
+        // Settings fake values in dock for development.
         final String[] values = new String[] { "", "", "", "", "", "" };
         final ArrayList<String> list = new ArrayList<String>();
         for (int i = 0; i < values.length; i++) {
@@ -166,15 +185,6 @@ public class BootService extends Service {
 
                 int leftMargin;
                 int rightMargin;
-                final int dockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
-                final int dragHandleWidth = (int) getResources().getDimension(R.dimen.drag_handle_width);
-
-                final WindowManager.LayoutParams dockLayoutLp =
-                        (WindowManager.LayoutParams) mDockLayout.getLayoutParams();
-                final LinearLayout.LayoutParams dockLp =
-                        (LinearLayout.LayoutParams) mDock.getLayoutParams();
-                final LinearLayout.LayoutParams dragHandleLp =
-                        (LinearLayout.LayoutParams) mDragHandle.getLayoutParams();
 
                 final int action = event.getActionMasked();
 
@@ -198,24 +208,47 @@ public class BootService extends Service {
                         LOGD(TAG, "MOVE");
                         int distance = (int) (event.getRawX() - mInitialTouchX);
                         mInitialTouchX = event.getRawX();
-                        leftMargin = dockLp.leftMargin + distance;
-                        rightMargin = dockLp.rightMargin - distance;
 
-                        if (leftMargin < 0) {
-                            leftMargin = 0;
-                            rightMargin = 0;
+                        if (mDockState == DOCK_OPENED) {
+                            // Move dock and drag handle inside dock layout.
+                            leftMargin = mDockLp.leftMargin + distance;
+                            rightMargin = mDockLp.rightMargin - distance;
+
+                            if (leftMargin < 0) {
+                                leftMargin = 0;
+                                rightMargin = 0;
+                            }
+                            if (leftMargin > mDock.getWidth()) {
+                                leftMargin = mDock.getWidth();
+                                rightMargin = -mDock.getWidth();
+                            }
+
+                            // Update dock position.
+                            mDockLp.setMargins(
+                                    leftMargin,
+                                    mDockLp.topMargin,
+                                    rightMargin,
+                                    mDockLp.bottomMargin);
+
+                            mDock.setLayoutParams(mDockLp);
+
+                            // Update drag handle position.
+                            mDragHandleLp.setMargins(leftMargin,
+                                    mDragHandleLp.topMargin,
+                                    rightMargin,
+                                    mDragHandleLp.bottomMargin);
+
+                            mDragHandle.setLayoutParams(mDragHandleLp);
+                        } else {
+                            // Slide dock layout inside window on the x axis.
+                            mDockLayoutLp.x -= distance;
+
+                            if (mDockLayoutLp.x > 0) {
+                                mDockLayoutLp.x = 0;
+                            }
+
+                            mWindowManager.updateViewLayout(mDockLayout, mDockLayoutLp);
                         }
-                        if (leftMargin > mDock.getWidth()) {
-                            leftMargin = mDock.getWidth();
-                            rightMargin = -mDock.getWidth();
-                        }
-
-                        dockLp.setMargins(leftMargin, dockLp.topMargin, rightMargin, dockLp.bottomMargin);
-                        mDock.setLayoutParams(dockLp);
-
-                        // Update drag handle position.
-                        dragHandleLp.setMargins(leftMargin, dragHandleLp.topMargin, rightMargin, dragHandleLp.bottomMargin);
-                        mDragHandle.setLayoutParams(dragHandleLp);
 
                         /*
                         if (dockLayoutLp.width - distance > dockLayoutWidth) {
@@ -229,39 +262,16 @@ public class BootService extends Service {
                         mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
                         */
 
-                        /*
-                        dockLayoutLp.x -= distance;
-                        mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
-                        */
-
                         return true;
 
                     case MotionEvent.ACTION_UP:
                         LOGD(TAG, "UP");
-                        leftMargin = dockLp.leftMargin;
-                        rightMargin = dockLp.rightMargin;
 
-                        if (leftMargin > mDock.getWidth() / 2) {
-                            leftMargin = mDock.getWidth();
-                            rightMargin = -mDock.getWidth();
-
-                            /*
-                            leftMargin = 0;
-                            rightMargin = 0;
-                            dockLayoutLp.width = dragHandleWidth;
-                            mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
-                            */
+                        if (mDockLp.leftMargin > mDock.getWidth() / 2) {
+                            closeDock();
                         } else {
-                            leftMargin = 0;
-                            rightMargin = 0;
+                            openDock();
                         }
-
-                        dockLp.setMargins(leftMargin, dockLp.topMargin, rightMargin, dockLp.bottomMargin);
-                        mDock.setLayoutParams(dockLp);
-
-                        // Update drag handle position.
-                        dragHandleLp.setMargins(leftMargin, dragHandleLp.topMargin, rightMargin, dragHandleLp.bottomMargin);
-                        mDragHandle.setLayoutParams(dragHandleLp);
 
                         return false;
                 }
@@ -277,9 +287,78 @@ public class BootService extends Service {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+
+                if (event.getActionMasked() == MotionEvent.ACTION_OUTSIDE) {
+                    closeDock();
+                }
+
                 return false;
             }
         });
+    }
+
+    private void openDock() {
+
+        // Slide Dock Layout into the window.
+        mDockLayoutLp.x = 0;
+        mWindowManager.updateViewLayout(mDockLayout, mDockLayoutLp);
+
+        // Update dock position.
+        mDockLp.setMargins(0, mDockLp.topMargin, 0, mDockLp.bottomMargin);
+        mDock.setLayoutParams(mDockLp);
+
+        // Update drag handle position.
+        mDragHandleLp.setMargins(0, mDragHandleLp.topMargin, 0, mDragHandleLp.bottomMargin);
+        mDragHandle.setLayoutParams(mDragHandleLp);
+
+        mDockState = DOCK_OPENED;
+    }
+
+    private void closeDock() {
+        float startFactor = mDockLp.leftMargin / (float) mDock.getWidth();
+
+        ValueAnimator val = ValueAnimator.ofFloat(startFactor, 1f);
+        val.setDuration(150);
+        val.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                final float factor = (float) animation.getAnimatedValue();
+
+                int leftMargin = (int) (mDock.getWidth() * factor);
+                int rightMargin = -leftMargin;
+
+                // Slide Dock Layout off the window.
+                if (factor == 1f) {
+                    leftMargin = 0;
+                    rightMargin = 0;
+
+                    if (mDockLayout != null) {
+                        mDockLayoutLp.x = -mDock.getWidth();
+                        mWindowManager.updateViewLayout(mDockLayout, mDockLayoutLp);
+                    }
+                }
+
+                // Update dock position.
+                mDockLp.setMargins(
+                        leftMargin,
+                        mDockLp.topMargin,
+                        rightMargin,
+                        mDockLp.bottomMargin);
+                mDock.setLayoutParams(mDockLp);
+
+                // Update drag handle position.
+                mDragHandleLp.setMargins(
+                        leftMargin,
+                        mDragHandleLp.topMargin,
+                        rightMargin,
+                        mDragHandleLp.bottomMargin);
+                mDragHandle.setLayoutParams(mDragHandleLp);
+            }
+        });
+
+        val.start();
+
+        mDockState = DOCK_CLOSED;
     }
 
     /**

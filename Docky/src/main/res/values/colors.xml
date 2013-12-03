@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="dock_background">#E8000000</color>
-    <color name="dock_seperarator">#E8444444</color>
-    <color name="blue">#0000FF</color>
+    <color name="dock_background">#DD000000</color>
+    <color name="dock_background_back">#E8000000</color>
+    <color name="dock_separator">#E8444444</color>
 </resources>
