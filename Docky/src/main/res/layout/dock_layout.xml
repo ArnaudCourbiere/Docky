@@ -18,7 +18,7 @@
         android:layout_width="@dimen/dock_width"
         android:layout_height="match_parent"
         android:choiceMode="none"
-        android:background="@color/dock_background"
+        android:background="@drawable/dock_background_black_straight"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp">
     </ListView>

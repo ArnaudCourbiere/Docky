@@ -318,7 +318,7 @@ public class BootService extends Service {
         float startFactor = mDockLp.leftMargin / (float) mDock.getWidth();
 
         ValueAnimator val = ValueAnimator.ofFloat(startFactor, 1f);
-        val.setDuration(150);
+        val.setDuration(100);
         val.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
