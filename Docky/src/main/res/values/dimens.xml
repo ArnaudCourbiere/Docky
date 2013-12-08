@@ -3,10 +3,14 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
 
-    <dimen name="dock_width">80dp</dimen>
+    <dimen name="dock_width">100dp</dimen>
+    <dimen name="dock_padding_left">20dp</dimen>
+    <dimen name="dock_padding_top">18dp</dimen>
+    <dimen name="dock_padding_right">2dp</dimen>
+    <dimen name="dock_padding_bottom">20dp</dimen>
     <dimen name="drag_handle_width">15dp</dimen>
-    <dimen name="dock_layout_width">95dp</dimen>
-    <dimen name="dock_item_width">80dp</dimen>
-    <dimen name="dock_item_height">80dp</dimen>
+    <dimen name="dock_layout_width">115dp</dimen>
+    <dimen name="dock_item_width">65dp</dimen>
+    <dimen name="dock_item_height">65dp</dimen>
 
     </resources>

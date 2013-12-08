@@ -1,10 +1,16 @@
 package me.courbiere.android.docky.service;
 
 import android.animation.ValueAnimator;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
 import android.view.GestureDetector;
@@ -12,17 +18,22 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
+import me.courbiere.android.docky.item.AppInfo;
 import me.courbiere.android.docky.ui.adapter.DockItemArrayAdapter;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
@@ -35,6 +46,8 @@ public class BootService extends Service {
 
     private static final int DOCK_CLOSED = 0;
     private static final int DOCK_OPENED = 1;
+
+    private ArrayList<AppInfo> mApplications;
 
     /**
      * Dock state
@@ -54,7 +67,12 @@ public class BootService extends Service {
     /**
      * Dock.
      */
-    private ListView mDock;
+    private LinearLayout mDock;
+
+    /**
+     * Dock item list
+     */
+    private ListView mItemList;
 
     /**
      * Drag handle.
@@ -94,6 +112,8 @@ public class BootService extends Service {
         // TODO
         LOGD(TAG, "onCreate()");
 
+        loadApplications(true);
+
         goToForeground();
         initListView();
         initListeners();
@@ -104,7 +124,7 @@ public class BootService extends Service {
 
         mDockLayoutLp = new WindowManager.LayoutParams(
                 dockWidth,
-                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                         | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
@@ -112,7 +132,7 @@ public class BootService extends Service {
                         | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
-        mDockLayoutLp.gravity = Gravity.RIGHT;
+        mDockLayoutLp.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
         mDockLayoutLp.setTitle(getString(R.string.app_name));
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         mWindowManager.addView(mDockLayout, mDockLayoutLp);
@@ -139,20 +159,15 @@ public class BootService extends Service {
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 
         mDockLayout = (LinearLayout) inflater.inflate(R.layout.dock_layout, null);
-        mDock = (ListView) mDockLayout.findViewById(R.id.dock);
+        mDock = (LinearLayout) mDockLayout.findViewById(R.id.dock);
+        mItemList = (ListView) mDockLayout.findViewById(R.id.dock_item_list);
         mDragHandle = mDockLayout.findViewById(R.id.drag_handle);
 
         mDockLp = (LinearLayout.LayoutParams) mDock.getLayoutParams();
         mDragHandleLp = (LinearLayout.LayoutParams) mDragHandle.getLayoutParams();
 
-        // Settings fake values in dock for development.
-        final String[] values = new String[] { "", "", "", "", "", "" };
-        final ArrayList<String> list = new ArrayList<String>();
-        for (int i = 0; i < values.length; i++) {
-            list.add(values[i]);
-        }
-        final ArrayAdapter<String> adapter = new DockItemArrayAdapter(this, R.layout.dock_item_layout, list);
-        mDock.setAdapter(adapter);
+        final ArrayAdapter<AppInfo> adapter = new DockItemArrayAdapter(this, R.layout.dock_item_layout, mApplications);
+        mItemList.setAdapter(adapter);
     }
 
     private void initListeners() {
@@ -262,7 +277,7 @@ public class BootService extends Service {
                         mWindowManager.updateViewLayout(mDockLayout, dockLayoutLp);
                         */
 
-                        return true;
+                        return false;
 
                     case MotionEvent.ACTION_UP:
                         LOGD(TAG, "UP");
@@ -282,6 +297,7 @@ public class BootService extends Service {
 
         mDock.setOnTouchListener(mDragListener);
         mDragHandle.setOnTouchListener(mDragListener);
+        mItemList.setOnTouchListener(mDragListener);
 
         mDockLayout.setOnTouchListener(new View.OnTouchListener() {
 
@@ -293,6 +309,16 @@ public class BootService extends Service {
                 }
 
                 return false;
+            }
+        });
+
+        mItemList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                final AppInfo app = (AppInfo) parent.getAdapter().getItem(position);
+                closeDock();
+                startActivity(app.intent);
             }
         });
     }
@@ -359,6 +385,63 @@ public class BootService extends Service {
         val.start();
 
         mDockState = DOCK_CLOSED;
+    }
+
+    /**
+     * Loads the list of installed applications in mApplications.
+     *
+     * @param isLaunching indicates whether the Activity is launching or not.
+     */
+    private void loadApplications(boolean isLaunching) {
+        if (isLaunching && mApplications != null) {
+            return;
+        }
+
+        final PackageManager manager = getPackageManager();
+
+        final Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+        final List<ResolveInfo> apps = manager.queryIntentActivities(mainIntent, 0);
+        Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
+
+        if (apps != null) {
+            final int count = apps.size();
+
+            if (mApplications == null) {
+                mApplications = new ArrayList<>(count);
+            }
+
+            mApplications.clear();
+
+            for (int i = 0; i < count; i++) {
+                final AppInfo application = new AppInfo();
+                final ResolveInfo info = apps.get(i);
+
+                application.title = info.loadLabel(manager);
+
+                application.setActivity(new ComponentName(
+                        info.activityInfo.applicationInfo.packageName,
+                        info.activityInfo.name),
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+
+                final int iconId = info.getIconResource();
+                final ActivityManager activityManager = (ActivityManager)
+                        this.getBaseContext().getSystemService(Context.ACTIVITY_SERVICE);
+                final int iconDpi = activityManager.getLauncherLargeIconDensity();
+
+                try {
+                    final Resources resources = manager.getResourcesForApplication(
+                            info.activityInfo.applicationInfo);
+                    application.icon = resources.getDrawableForDensity(iconId, iconDpi);
+                } catch (PackageManager.NameNotFoundException e) {
+                    application.icon = info.activityInfo.loadIcon(manager);
+                }
+
+                mApplications.add(application);
+            }
+        }
     }
 
     /**

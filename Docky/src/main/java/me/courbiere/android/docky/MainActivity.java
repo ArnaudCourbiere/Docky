@@ -3,8 +3,10 @@ package me.courbiere.android.docky;
 import android.app.Activity;
 
 import android.app.Fragment;
-import android.app.Notification;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -12,6 +14,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import me.courbiere.android.docky.item.AppInfo;
 import me.courbiere.android.docky.service.BootService;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
@@ -68,9 +75,9 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
         */
-        Intent intent = new Intent(Intent.ACTION_PICK_ACTIVITY);
+        //Intent intent = new Intent(Intent.ACTION_PICK_ACTIVITY);
         //intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        startActivityForResult(intent, 1234);
+        //startActivityForResult(intent, 1234);
     }
 
     /**

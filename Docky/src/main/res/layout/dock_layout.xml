@@ -9,18 +9,29 @@
     <View
         android:id="@+id/drag_handle"
         android:layout_width="@dimen/drag_handle_width"
-        android:layout_height="match_parent">
-    </View>
+        android:layout_height="match_parent"/>
 
-    <ListView
+    <LinearLayout
         android:id="@+id/dock"
-        android:orientation="vertical"
         android:layout_width="@dimen/dock_width"
-        android:layout_height="match_parent"
-        android:choiceMode="none"
-        android:background="@drawable/dock_background_black_straight"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="0dp">
-    </ListView>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="18dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="12dp"
+        android:background="@drawable/dock_background_white_rounded">
+
+        <ListView
+            android:id="@+id/dock_item_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:choiceMode="none"
+            android:orientation="vertical"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="15dp"
+            android:scrollbarStyle="outsideInset"
+            android:overScrollMode="never"/>
+
+    </LinearLayout>
 
 </LinearLayout>
