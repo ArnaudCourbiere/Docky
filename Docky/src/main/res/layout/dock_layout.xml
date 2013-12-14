@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<me.courbiere.android.docky.ui.view.DockLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/dock_layout"
     android:layout_width="@dimen/dock_layout_width"
-    android:layout_height="match_parent"
-    android:orientation="horizontal">
-
-    <View
-        android:id="@+id/drag_handle"
-        android:layout_width="@dimen/drag_handle_width"
-        android:layout_height="match_parent"/>
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:id="@+id/dock"
@@ -17,6 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
         android:layout_marginBottom="18dp"
+        android:layout_alignParentRight="true"
         android:paddingTop="8dp"
         android:paddingBottom="12dp"
         android:background="@drawable/dock_background_white_rounded">
@@ -30,8 +26,11 @@
             android:divider="@android:color/transparent"
             android:dividerHeight="15dp"
             android:scrollbarStyle="outsideInset"
-            android:overScrollMode="never"/>
+            android:overScrollMode="never"
+            android:clipToPadding="false"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"/>
 
     </LinearLayout>
 
-</LinearLayout>
+</me.courbiere.android.docky.ui.view.DockLayout>

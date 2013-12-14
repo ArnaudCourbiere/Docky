@@ -41,7 +41,7 @@ public class DockItemArrayAdapter extends ArrayAdapter<AppInfo> {
 
             holder = new ViewHolder();
             holder.icon = (ImageView) convertView.findViewById(R.id.app_icon);
-            holder.name = (TextView) convertView.findViewById(R.id.app_name);
+            // holder.name = (TextView) convertView.findViewById(R.id.app_name);
 
             convertView.setTag(holder);
         } else {
@@ -51,13 +51,13 @@ public class DockItemArrayAdapter extends ArrayAdapter<AppInfo> {
         final AppInfo app = mDockItems.get(position);
 
         holder.icon.setImageDrawable(app.icon);
-        holder.name.setText(app.title);
+        // holder.name.setText(app.title);
 
         return convertView;
     }
 
     private class ViewHolder {
         public ImageView icon;
-        public TextView name;
+        // public TextView name;
     }
 }

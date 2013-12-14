@@ -10,7 +10,7 @@
     <dimen name="dock_padding_bottom">20dp</dimen>
     <dimen name="drag_handle_width">15dp</dimen>
     <dimen name="dock_layout_width">115dp</dimen>
-    <dimen name="dock_item_width">65dp</dimen>
-    <dimen name="dock_item_height">65dp</dimen>
+    <dimen name="dock_item_width">60dp</dimen>
+    <dimen name="dock_item_height">60dp</dimen>
 
     </resources>
