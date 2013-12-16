@@ -107,7 +107,6 @@ public class BootService extends Service {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final AppInfo app = (AppInfo) parent.getAdapter().getItem(position);
-                mDockLayout.close();
                 startActivity(app.intent);
             }
         });

@@ -13,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import me.courbiere.android.docky.item.AppInfo;
 import me.courbiere.android.docky.service.BootService;
+import me.courbiere.android.docky.ui.view.DockLayout;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
 
