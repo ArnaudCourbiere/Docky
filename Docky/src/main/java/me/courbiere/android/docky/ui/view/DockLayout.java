@@ -90,7 +90,7 @@ public class DockLayout extends RelativeLayout {
 
         mDragCallback = new ViewDragCallback();
         mDragger = ViewDragHelper.create(this, TOUCH_SLOP_SENSITIVITY, mDragCallback);
-        mDragger.setEdgeTrackingEnabled(ViewDragHelper.EDGE_RIGHT);
+        mDragger.setEdgeTrackingEnabled(ViewDragHelper.EDGE_RIGHT | ViewDragHelper.EDGE_LEFT);
         mDragger.setMinVelocity(minVel);
         // TODO: Check implementation.
         // mDragCallback.setDragger(mDragger);
@@ -146,7 +146,9 @@ public class DockLayout extends RelativeLayout {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
+        if (mDock.getVisibility() != INVISIBLE) {
+            super.onLayout(changed, l, t, r, b);
+        }
     }
 
     @Override
@@ -164,6 +166,14 @@ public class DockLayout extends RelativeLayout {
                 mInitialMotionX = x;
                 mInitialMotionY = y;
 
+                // If DockLayout is folded, unfold.
+                final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
+
+                if (dockLayoutLp.x == -mDock.getWidth()) {
+                    dockLayoutLp.x = 0;
+                    mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+                }
+
                 // Should not be needed since we don't have a content view.
                 /*
                 final View child = mDragger.findTopChildUnder((int) ev.getX(), (int) ev.getY());
@@ -175,15 +185,6 @@ public class DockLayout extends RelativeLayout {
 
                 break;
 
-            case MotionEvent.ACTION_MOVE:
-                /*
-                if (mDragger.checkTouchSlop(ViewDragHelper.DIRECTION_ALL)) {
-                    mDragger.removeCallbacks();
-                }
-                */
-                break;
-
-            case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
                 close();
                 break;
@@ -206,78 +207,15 @@ public class DockLayout extends RelativeLayout {
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                LOGD(TAG, "DOWN");
                 mInitialMotionX = ev.getRawX();
                 mInitialMotionY = ev.getRawY();
-
-                // If DockLayout is folded, unfold.
-                LOGD(TAG, Integer.toString(this.getLeft()));
-                final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
-
-                if (dockLayoutLp.x == -mDock.getWidth()) {
-                    dockLayoutLp.x = 0;
-                    mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
-                    mDock.offsetLeftAndRight(this.getWidth());
-
-                    LOGD(TAG, Integer.toString(mDock.getLeft()));
-                }
-
                 break;
 
-            /*
-            case MotionEvent.ACTION_MOVE:
-                // LOGD(TAG, "MOVE");
-                int distance = (int) (ev.getRawX() - mInitialMotionX);
-                mInitialMotionX = ev.getRawX();
-                mInitialMotionY = ev.getRawY();
-
-                if (mDockState == DOCK_OPENED) {
-                    // Move dock and drag handle inside dock layout.
-                    leftMargin = dockLp.leftMargin + distance;
-                    rightMargin = dockLp.rightMargin - distance;
-
-                    if (leftMargin < 0) {
-                        leftMargin = 0;
-                        rightMargin = 0;
-                    }
-                    if (leftMargin > dock.getWidth()) {
-                        leftMargin = dock.getWidth();
-                        rightMargin = -dock.getWidth();
-                    }
-
-                    // Update dock position.
-                    dockLp.setMargins(
-                            leftMargin,
-                            dockLp.topMargin,
-                            rightMargin,
-                            dockLp.bottomMargin);
-
-                    dock.setLayoutParams(dockLp);
-                } else {
-                    final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) this.getLayoutParams();
-                    // Slide dock layout inside window on the x axis.
-                    dockLayoutLp.x -= distance;
-
-                    if (dockLayoutLp.x > 0) {
-                        dockLayoutLp.x = 0;
-                    }
-
-                    mWindowManager.updateViewLayout(this, dockLayoutLp);
-                }
-
-                return false;
-            */
-
             case MotionEvent.ACTION_UP:
-                LOGD(TAG, "UP");
                 invalidate(); // TODO: remove if not needed.
-
                 break;
 
             case MotionEvent.ACTION_CANCEL:
-                close();
-                break;
-
             case MotionEvent.ACTION_OUTSIDE:
                 close();
                 break;
@@ -327,68 +265,13 @@ public class DockLayout extends RelativeLayout {
     }
 
     public void open() {
-        /*
-        final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) this.getLayoutParams();
-        final View dock = getDockView();
-        final LayoutParams dockLp = (LayoutParams) dock.getLayoutParams();
-
-        // Slide Dock Layout into the window.
-        dockLayoutLp.x = 0;
-        mWindowManager.updateViewLayout(this, dockLayoutLp);
-
-        // Update dock position.
-        dockLp.setMargins(0, dockLp.topMargin, 0, dockLp.bottomMargin);
-        dock.setLayoutParams(dockLp);
-
-        mDockState = DOCK_OPENED;
-        */
+        mDragger.smoothSlideViewTo(mDock, getWidth() - mDock.getWidth(), mDock.getTop());
+        invalidate();
     }
 
     public void close() {
-        /*
-        final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) this.getLayoutParams();
-        final View dock = getDockView();
-        final LayoutParams dockLp = (LayoutParams) dock.getLayoutParams();
-        float startFactor = dockLp.leftMargin / (float) dock.getWidth();
-
-        ValueAnimator val = ValueAnimator.ofFloat(startFactor, 1f);
-        val.setDuration(100);
-        val.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                final float factor = (float) animation.getAnimatedValue();
-
-                int leftMargin = (int) (dock.getWidth() * factor);
-                int rightMargin = -leftMargin;
-
-                // Slide Dock Layout off the window.
-                if (factor == 1f) {
-                    leftMargin = 0;
-                    rightMargin = 0;
-
-                    dockLayoutLp.x = -dock.getWidth();
-
-                    try {
-                        mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
-                    } catch (IllegalArgumentException e) {
-                        // TODO: Find another way to handle stopping the service when the dock is out.
-                    }
-                }
-
-                // Update dock position.
-                dockLp.setMargins(
-                        leftMargin,
-                        dockLp.topMargin,
-                        rightMargin,
-                        dockLp.bottomMargin);
-                dock.setLayoutParams(dockLp);
-            }
-        });
-
-        val.start();
-
-        mDockState = DOCK_CLOSED;
-        */
+        mDragger.smoothSlideViewTo(mDock, getWidth(), mDock.getTop());
+        invalidate();
     }
 
     private class ViewDragCallback extends ViewDragHelper.Callback {
@@ -407,6 +290,7 @@ public class DockLayout extends RelativeLayout {
                         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
                         dockLayoutLp.x = -mDock.getWidth();
                         mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+                        mDock.setVisibility(INVISIBLE);
                     }
 
                     break;
@@ -455,6 +339,10 @@ public class DockLayout extends RelativeLayout {
 
         @Override
         public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
+            if (mDock.getVisibility() == INVISIBLE) {
+                mDock.setVisibility(VISIBLE);
+            }
+
             invalidate();
         }
     }

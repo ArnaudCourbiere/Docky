@@ -162,6 +162,8 @@ public class BootService extends Service {
                     application.icon = resources.getDrawableForDensity(iconId, iconDpi);
                 } catch (PackageManager.NameNotFoundException e) {
                     application.icon = info.activityInfo.loadIcon(manager);
+                } catch (RuntimeException e) {
+                    // TODO: Look back at example for handling resource not found.
                 }
 
                 mApplications.add(application);
