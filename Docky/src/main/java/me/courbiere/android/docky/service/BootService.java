@@ -13,6 +13,7 @@ import android.content.res.Resources;
 import android.os.IBinder;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -106,8 +107,18 @@ public class BootService extends Service {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                LOGD(TAG, "item click");
                 final AppInfo app = (AppInfo) parent.getAdapter().getItem(position);
                 startActivity(app.intent);
+            }
+        });
+
+        mItemList.setOnGenericMotionListener(new View.OnGenericMotionListener() {
+            @Override
+            public boolean onGenericMotion(View v, MotionEvent event) {
+                int action = event.getActionMasked();
+                LOGD(TAG, "action:" + Integer.toString(action));
+                return false;
             }
         });
     }

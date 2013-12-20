@@ -53,8 +53,14 @@ public class DockLayout extends RelativeLayout {
 
     /**
      * Position layout param.
+     * TODO: Remove this layout parameter
      */
     private int mPosition;
+
+    /**
+     * Dock Layout height(used to restore layout width on unfold).
+     */
+    private int mDockLayoutHeight;
 
     /**
      * Dock view contained within the DockLayout.
@@ -170,8 +176,7 @@ public class DockLayout extends RelativeLayout {
                 final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
 
                 if (dockLayoutLp.x == -mDock.getWidth()) {
-                    dockLayoutLp.x = 0;
-                    mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+                    unfoldContainer();
                 }
 
                 // Should not be needed since we don't have a content view.
@@ -189,6 +194,9 @@ public class DockLayout extends RelativeLayout {
                 close();
                 break;
         }
+
+        LOGD(TAG, Boolean.toString(interceptForDrag));
+        LOGD(TAG, Boolean.toString(interceptForTap));
 
         return interceptForDrag || interceptForTap;
     }
@@ -212,7 +220,13 @@ public class DockLayout extends RelativeLayout {
                 break;
 
             case MotionEvent.ACTION_UP:
-                invalidate(); // TODO: remove if not needed.
+                final int dragState = mDragger.getViewDragState();
+
+                if (dragState == STATE_IDLE && (mDock.getLeft() == getWidth())) {
+                    foldContainer();
+                }
+
+                invalidate();
                 break;
 
             case MotionEvent.ACTION_CANCEL:
@@ -274,6 +288,22 @@ public class DockLayout extends RelativeLayout {
         invalidate();
     }
 
+    private void foldContainer() {
+        mDockLayoutHeight = getHeight();
+        final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
+        dockLayoutLp.x = -mDock.getWidth();
+        //dockLayoutLp.height = 100;
+        mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+        mDock.setVisibility(INVISIBLE);
+    }
+
+    private void unfoldContainer() {
+        final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
+        dockLayoutLp.x = 0;
+        //dockLayoutLp.height = mDockLayoutHeight;
+        mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+    }
+
     private class ViewDragCallback extends ViewDragHelper.Callback {
 
         @Override
@@ -287,10 +317,7 @@ public class DockLayout extends RelativeLayout {
                 case STATE_IDLE:
                     // If drawer is closed, fold container.
                     if (mDock.getLeft() == getWidth()) {
-                        final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
-                        dockLayoutLp.x = -mDock.getWidth();
-                        mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
-                        mDock.setVisibility(INVISIBLE);
+                        foldContainer();
                     }
 
                     break;
