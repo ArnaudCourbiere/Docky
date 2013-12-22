@@ -13,6 +13,8 @@ import java.util.List;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.item.AppInfo;
 
+import static me.courbiere.android.docky.util.LogUtils.*;
+
 /**
  * DockItemArrayAdapter.
  */
@@ -52,6 +54,13 @@ public class DockItemArrayAdapter extends ArrayAdapter<AppInfo> {
 
         holder.icon.setImageDrawable(app.icon);
         // holder.name.setText(app.title);
+        holder.icon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LOGD(TAG, "on click item");
+                getContext().startActivity(app.intent);
+            }
+        });
 
         return convertView;
     }

@@ -69,7 +69,7 @@ public class BootService extends Service {
 
         goToForeground();
         initListView();
-        initListeners();
+        // initListeners();
 
         mDockLayout.attachToWindow();
     }
@@ -110,15 +110,6 @@ public class BootService extends Service {
                 LOGD(TAG, "item click");
                 final AppInfo app = (AppInfo) parent.getAdapter().getItem(position);
                 startActivity(app.intent);
-            }
-        });
-
-        mItemList.setOnGenericMotionListener(new View.OnGenericMotionListener() {
-            @Override
-            public boolean onGenericMotion(View v, MotionEvent event) {
-                int action = event.getActionMasked();
-                LOGD(TAG, "action:" + Integer.toString(action));
-                return false;
             }
         });
     }

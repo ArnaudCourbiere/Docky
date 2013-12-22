@@ -134,10 +134,13 @@ public class DockLayout extends RelativeLayout {
                 dockLayoutWidth,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
+//                WindowManager.LayoutParams.TYPE_PRIORITY_PHONE,
+//                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                         | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
                         | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                         PixelFormat.TRANSLUCENT);
 
         layoutParams.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
@@ -293,6 +296,7 @@ public class DockLayout extends RelativeLayout {
         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
         dockLayoutLp.x = -mDock.getWidth();
         //dockLayoutLp.height = 100;
+        dockLayoutLp.flags |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
         mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
         mDock.setVisibility(INVISIBLE);
     }
@@ -301,6 +305,7 @@ public class DockLayout extends RelativeLayout {
         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
         dockLayoutLp.x = 0;
         //dockLayoutLp.height = mDockLayoutHeight;
+        dockLayoutLp.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
         mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
     }
 
