@@ -1,31 +1,21 @@
 package me.courbiere.android.docky;
 
-import android.app.Activity;
-
-import android.app.Fragment;
-import android.content.ComponentName;
+import android.support.v4.app.Fragment;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.RelativeLayout;
+import android.widget.Button;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import me.courbiere.android.docky.item.AppInfo;
-import me.courbiere.android.docky.service.BootService;
-import me.courbiere.android.docky.ui.view.DockLayout;
+import me.courbiere.android.docky.service.DockService;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
     private static final String TAG = "MainActivity";
 
     @Override
@@ -34,7 +24,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
+            getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
         }
@@ -61,27 +51,6 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void startDocky(View v) {
-        LOGD(TAG, "startDocky()");
-        startService(new Intent(this, BootService.class));
-    }
-
-    public void stopDocky(View v) {
-        LOGD(TAG, "stopDocky()");
-        stopService(new Intent(this, BootService.class));
-    }
-
-    public void pickApp(View v) {
-        LOGD(TAG, "pickApp()");
-        /*
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        */
-        //Intent intent = new Intent(Intent.ACTION_PICK_ACTIVITY);
-        //intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        //startActivityForResult(intent, 1234);
-    }
-
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -94,6 +63,27 @@ public class MainActivity extends Activity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+            final Button toggleButon = (Button) rootView.findViewById(R.id.toggle);
+
+            if (DockService.isRunning()) {
+                toggleButon.setText(R.string.stop);
+            } else {
+                toggleButon.setText(R.string.start);
+            }
+
+            toggleButon.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (DockService.isRunning()) {
+                        getActivity().stopService(new Intent(getActivity(), DockService.class));
+                        toggleButon.setText(R.string.start);
+                    } else {
+                        getActivity().startService(new Intent(getActivity(), DockService.class));
+                        toggleButon.setText(R.string.stop);
+                    }
+                }
+            });
             return rootView;
         }
     }

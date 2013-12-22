@@ -5,10 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-import me.courbiere.android.docky.service.BootService;
-
-import static me.courbiere.android.docky.util.LogUtils.*;
-
 /**
  * Receives the BOOT_COMPLETED broadcast and starts Dock depending on user preferences.
  */
@@ -30,7 +26,7 @@ public class BootCompletedReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
-            //context.startService(new Intent(context, BootService.class));
+            //context.startService(new Intent(context, DockService.class));
         }
     }
 }

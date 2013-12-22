@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -35,10 +37,10 @@ import me.courbiere.android.docky.ui.view.DockLayout;
 import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
- * Bootstraps the dock View and Gesture Listeners.
+ * Attaches the DockLayout to the window.
  */
-public class BootService extends Service {
-    private static final String TAG = "BootService";
+public class DockService extends Service {
+    private static final String TAG = "DockService";
 
     private ArrayList<AppInfo> mApplications;
 
@@ -58,12 +60,19 @@ public class BootService extends Service {
     private ListView mItemList;
 
     /**
+     * Instance variable to check if the service is running.
+     * TODO: Find a better way to check if the service is running.
+     */
+    private static boolean sRunning = false;
+
+    /**
      * Called by the system when the service is first created.  Do not call this method directly.
      */
     @Override
     public void onCreate() {
         // TODO
         LOGD(TAG, "onCreate()");
+        sRunning = true;
 
         loadApplications(true);
 
@@ -74,21 +83,43 @@ public class BootService extends Service {
         mDockLayout.attachToWindow();
     }
 
+    /**
+     * Determines if the DockService is running.
+     *
+     * @return returns true if the service is running, false otherwise.
+     */
+    public static boolean isRunning() {
+        return sRunning;
+    }
+
     private void goToForeground() {
-        final Notification.Builder notificationBuilder = new Notification.Builder(this)
+        final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText("Aloha!");
 
         final Notification notification = notificationBuilder.getNotification();
-        notification.priority |= Notification.PRIORITY_MIN;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            notification.priority |= Notification.PRIORITY_MIN;
+        }
 
         final Intent notificationIntent = new Intent(this, MainActivity.class);
         final PendingIntent notificationPendingIntent = PendingIntent.getActivity(
                 this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         notificationBuilder.setContentIntent(notificationPendingIntent);
+
         startForeground(1337, notification);
+        /*
+        Notification notification = new Notification(R.drawable.ic_launcher, getText(R.string.app_name),
+                System.currentTimeMillis());
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        notification.setLatestEventInfo(this, getText(R.string.app_name),
+                "Aloha!", pendingIntent);
+        startForeground(1337, notification);
+        */
     }
 
     private void initListView() {
@@ -153,19 +184,23 @@ public class BootService extends Service {
                         Intent.FLAG_ACTIVITY_NEW_TASK
                                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
 
-                final int iconId = info.getIconResource();
-                final ActivityManager activityManager = (ActivityManager)
-                        this.getBaseContext().getSystemService(Context.ACTIVITY_SERVICE);
-                final int iconDpi = activityManager.getLauncherLargeIconDensity();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+                    final int iconId = info.getIconResource();
+                    final ActivityManager activityManager = (ActivityManager)
+                            this.getBaseContext().getSystemService(Context.ACTIVITY_SERVICE);
+                    final int iconDpi = activityManager.getLauncherLargeIconDensity();
 
-                try {
-                    final Resources resources = manager.getResourcesForApplication(
-                            info.activityInfo.applicationInfo);
-                    application.icon = resources.getDrawableForDensity(iconId, iconDpi);
-                } catch (PackageManager.NameNotFoundException e) {
-                    application.icon = info.activityInfo.loadIcon(manager);
-                } catch (RuntimeException e) {
-                    // TODO: Look back at example for handling resource not found.
+                    try {
+                        final Resources resources = manager.getResourcesForApplication(
+                                info.activityInfo.applicationInfo);
+                        application.icon = resources.getDrawableForDensity(iconId, iconDpi);
+                    } catch (PackageManager.NameNotFoundException e) {
+                        application.icon = info.activityInfo.loadIcon(manager);
+                    } catch (RuntimeException e) {
+                        // TODO: Look back at example for handling resource not found.
+                    }
+                } else {
+                    application.icon = info.loadIcon(manager);
                 }
 
                 mApplications.add(application);
@@ -198,6 +233,8 @@ public class BootService extends Service {
     public void onDestroy() {
         // TODO
         LOGD(TAG, "onDestroy()");
+        sRunning = false;
+
         if (mDockLayout != null) {
             ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(mDockLayout);
             mDockLayout = null;

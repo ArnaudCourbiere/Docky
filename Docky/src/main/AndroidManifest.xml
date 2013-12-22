@@ -27,7 +27,7 @@
         </activity>
 
         <service
-            android:name=".service.BootService"
+            android:name=".service.DockService"
             android:exported="false" />
 
         <receiver
