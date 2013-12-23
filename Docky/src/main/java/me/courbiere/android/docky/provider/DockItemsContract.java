@@ -62,6 +62,27 @@ public class DockItemsContract {
      */
     protected interface DockItemsColumns {
 
+        /** The item title */
+        public static final String TITLE = "title";
+
+        /** The item intent */
+        public static final String INTENT = "intent";
+
+        /** The item type */
+        public static final String ITEM_TYPE = "itemType";
+
+        /** The icon type */
+        public static final String ICON_TYPE = "iconType";
+
+        /** The icon package */
+        public static final String ICON_PACKAGE = "iconPackage";
+
+        /** The icon resource */
+        public static final String ICON_RESOURCE = "iconResource";
+
+        /** The icon */
+        public static final String ICON = "icon";
+
         /** The package name of the application */
         public static final String PACKAGE_NAME = "packageName";
 
