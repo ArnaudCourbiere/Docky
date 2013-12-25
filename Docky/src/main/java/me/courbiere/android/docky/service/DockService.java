@@ -10,6 +10,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -20,9 +23,12 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CursorAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.SimpleCursorAdapter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +37,7 @@ import java.util.List;
 import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.item.AppInfo;
+import me.courbiere.android.docky.provider.DockItemsContract;
 import me.courbiere.android.docky.ui.adapter.DockItemArrayAdapter;
 import me.courbiere.android.docky.ui.view.DockLayout;
 
@@ -60,6 +67,11 @@ public class DockService extends Service {
     private ListView mItemList;
 
     /**
+     * Adapter used to display the dock items.
+     */
+    private SimpleCursorAdapter mItemsAdapter;
+
+    /**
      * Instance variable to check if the service is running.
      * TODO: Find a better way to check if the service is running.
      */
@@ -71,10 +83,7 @@ public class DockService extends Service {
     @Override
     public void onCreate() {
         // TODO
-        LOGD(TAG, "onCreate()");
         sRunning = true;
-
-        loadApplications(true);
 
         goToForeground();
         initListView();
@@ -129,8 +138,43 @@ public class DockService extends Service {
         mDock = (LinearLayout) mDockLayout.findViewById(R.id.dock);
         mItemList = (ListView) mDockLayout.findViewById(R.id.dock_item_list);
 
-        final ArrayAdapter<AppInfo> adapter = new DockItemArrayAdapter(this, R.layout.dock_item_layout, mApplications);
-        mItemList.setAdapter(adapter);
+        final String[] projection = new String[] {
+                DockItemsContract.DockItems._ID,
+                DockItemsContract.DockItems.INTENT,
+                DockItemsContract.DockItems.TITLE,
+                DockItemsContract.DockItems.ICON };
+        final String[] from = new String[] {DockItemsContract.DockItems.ICON };
+        final int[] to = new int[] { R.id.app_icon };
+
+        Cursor cursor = getContentResolver().query(DockItemsContract.DockItems.CONTENT_URI,
+                projection, null, null, DockItemsContract.DockItems.POSITION + " ASC");
+        mItemsAdapter = new SimpleCursorAdapter(getBaseContext(), R.layout.dock_item_layout,
+                cursor, from, to, 0);
+
+        // Use custom binder.
+        final SimpleCursorAdapter.ViewBinder binder = new SimpleCursorAdapter.ViewBinder() {
+
+            @Override
+            public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+                LOGD(TAG, "setViewValue");
+
+                // TODO: Use icon cache + determine if Bitmap or Drawable should be used here.
+                final String columnName = cursor.getColumnName(columnIndex);
+
+                if (columnName.equals(DockItemsContract.DockItems.ICON)) {
+                    byte[] icon = cursor.getBlob(columnIndex);
+                    final ImageView imageView = (ImageView) view;
+                    final Bitmap iconBitmap = BitmapFactory.decodeByteArray(icon, 0, icon.length);
+                    imageView.setImageBitmap(iconBitmap);
+                    return true;
+                }
+
+                return false;
+            }
+        };
+
+        mItemsAdapter.setViewBinder(binder);
+        mItemList.setAdapter(mItemsAdapter);
     }
 
     private void initListeners() {
@@ -172,6 +216,7 @@ public class DockService extends Service {
 
             mApplications.clear();
 
+            /*
             for (int i = 0; i < count; i++) {
                 final AppInfo application = new AppInfo();
                 final ResolveInfo info = apps.get(i);
@@ -205,6 +250,7 @@ public class DockService extends Service {
 
                 mApplications.add(application);
             }
+            */
         }
     }
 
@@ -232,7 +278,6 @@ public class DockService extends Service {
     @Override
     public void onDestroy() {
         // TODO
-        LOGD(TAG, "onDestroy()");
         sRunning = false;
 
         if (mDockLayout != null) {

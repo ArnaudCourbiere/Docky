@@ -1,7 +1,9 @@
 package me.courbiere.android.docky.provider;
 
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -14,14 +16,25 @@ import me.courbiere.android.docky.sql.DbHelper;
 
 /**
  * Dock Item Content Provider.
+ *
+ * TODO: Add support for URL GET parameter controlling notification.
  */
 public class DockItemsProvider extends ContentProvider {
     private static final String TAG = "DockItemsProvider";
 
-    // Uri matcher
+    /**
+     * Db Helper.
+     */
+    private DbHelper mDbHelper;
+
+    /**
+     * Uri matcher.
+     */
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
-    // Regex used to split query strings.
+    /**
+     * Regex used to split query strings.
+     */
     public static final String QUERY_TOKENIZER_REGEX = "[^\\w@]+";
 
     // Directory values MUST BE EVEN, Item values MUST BE ODD.
@@ -34,7 +47,13 @@ public class DockItemsProvider extends ContentProvider {
         public static final String PK = DockItemsContract.DockItems._ID;
 
         public static final String[] PROJECTION = new String [] {
-                DockItemsContract.DockItems.PACKAGE_NAME,
+                DockItemsContract.DockItems.TITLE,
+                DockItemsContract.DockItems.INTENT,
+                DockItemsContract.DockItems.ITEM_TYPE,
+                DockItemsContract.DockItems.ICON_TYPE,
+                DockItemsContract.DockItems.ICON_PACKAGE,
+                DockItemsContract.DockItems.ICON_RESOURCE,
+                DockItemsContract.DockItems.ICON,
                 DockItemsContract.DockItems.POSITION };
     }
 
@@ -53,8 +72,8 @@ public class DockItemsProvider extends ContentProvider {
      */
     @Override
     public boolean onCreate() {
-
-        // TODO: Create an the DbHelper here?.
+        final Context context = getContext();
+        mDbHelper = new DbHelper(context);
         return true;
     }
 
@@ -101,9 +120,6 @@ public class DockItemsProvider extends ContentProvider {
 
         // TODO: See waitForAccess in ContactsProvider2.java and check if needed.
 
-        final DbHelper dbHelper = new DbHelper(getContext());
-        final SQLiteDatabase db = dbHelper.getWritableDatabase();
-
         // Use defaults projection if none is supplied.
         if (projection == null) {
             projection = this.getDefaultProjection(uri);
@@ -122,6 +138,8 @@ public class DockItemsProvider extends ContentProvider {
                 sortOrder = BaseColumns._ID + " ASC";
             }
         }
+
+        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         Cursor cursor = queryBuilder.query(db, projection, selection, selectionArgs,
                 null, null, sortOrder);
@@ -142,8 +160,7 @@ public class DockItemsProvider extends ContentProvider {
      */
     @Override
     public Uri insert(final Uri uri, final ContentValues values) {
-        final DbHelper dbHelper = new DbHelper(getContext());
-        final SQLiteDatabase db = dbHelper.getWritableDatabase();
+        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         Uri insertUri;
 
         try {
@@ -153,8 +170,9 @@ public class DockItemsProvider extends ContentProvider {
                 case DOCK_ITEMS:
                 case DOCK_ITEMS_ID:
                     db.insertOrThrow(DockItemsContract.DockItems.TABLE_NAME, null, values);
-                    insertUri = DockItemsContract.DockItems.CONTENT_URI.buildUpon()
-                            .appendPath(values.getAsString(DockItemsContract.DockItems._ID)).build();
+                    insertUri =
+                            DockItemsContract.DockItems.CONTENT_URI.buildUpon().appendPath(
+                                    values.getAsString(DockItemsContract.DockItems._ID)).build();
                     break;
                 default:
                     throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -166,6 +184,41 @@ public class DockItemsProvider extends ContentProvider {
         this.getContext().getContentResolver().notifyChange(uri, null);
 
         return insertUri;
+    }
+
+    /**
+     * Override this to handle requests to insert a set of new rows, or the
+     * default implementation will iterate over the values and call
+     * {@link #insert} on each of them.
+     * As a courtesy, call {@link ContentResolver#notifyChange(android.net.Uri, android.database.ContentObserver) notifyChange()}
+     * after inserting.
+     * This method can be called from multiple threads, as described in
+     * <a href="{@docRoot}guide/topics/fundamentals/processes-and-threads.html#Threads">Processes
+     * and Threads</a>.
+     *
+     * @param uri    The content:// URI of the insertion request.
+     * @param values An array of sets of column_name/value pairs to add to the database.
+     *               This must not be {@code null}.
+     * @return The number of values that were inserted.
+     */
+    @Override
+    public int bulkInsert(Uri uri, ContentValues[] values) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        db.beginTransaction();
+
+        try {
+            for (ContentValues value : values) {
+                insert(uri, value);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+
+        this.getContext().getContentResolver().notifyChange(uri, null);
+
+        return values.length;
     }
 
     /**
@@ -185,8 +238,7 @@ public class DockItemsProvider extends ContentProvider {
             final String selection,
             final String[] selectionArgs) {
 
-        final DbHelper dbHelper = new DbHelper(getContext());
-        final SQLiteDatabase db = dbHelper.getWritableDatabase();
+        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         final int rowsAffected;
 
         try {
@@ -222,8 +274,7 @@ public class DockItemsProvider extends ContentProvider {
     public int delete(final Uri uri, final String selection, final String[] selectionArgs) {
         // TODO: Check against example app.
 
-        final DbHelper dbHelper = new DbHelper(getContext());
-        final SQLiteDatabase db = dbHelper.getWritableDatabase();
+        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         final int rowsAffected;
 
         try {

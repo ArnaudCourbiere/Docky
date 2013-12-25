@@ -83,9 +83,6 @@ public class DockItemsContract {
         /** The icon */
         public static final String ICON = "icon";
 
-        /** The package name of the application */
-        public static final String PACKAGE_NAME = "packageName";
-
         /** The item position in the dock */
         public static final String POSITION = "position";
     }

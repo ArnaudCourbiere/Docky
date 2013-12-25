@@ -12,5 +12,6 @@
     <dimen name="dock_layout_width">115dp</dimen>
     <dimen name="dock_item_width">60dp</dimen>
     <dimen name="dock_item_height">60dp</dimen>
+    <dimen name="app_icon_size">60dp</dimen>
 
     </resources>

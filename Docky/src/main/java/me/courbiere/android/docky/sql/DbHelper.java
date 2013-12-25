@@ -1,10 +1,27 @@
 package me.courbiere.android.docky.sql;
 
+import android.app.ActivityManager;
+import android.content.ComponentName;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import me.courbiere.android.docky.provider.DockItemsContract;
+import me.courbiere.android.docky.util.ImageUtils;
+
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * Database Helper.
@@ -34,7 +51,13 @@ public class DbHelper extends SQLiteOpenHelper {
     private static final String[] SCHEMAS = {
             "CREATE TABLE IF NOT EXISTS " + DockItemsContract.DockItems.TABLE_NAME + " (" +
             DockItemsContract.DockItems._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-            DockItemsContract.DockItems.PACKAGE_NAME + " TEXT NOT NULL," +
+            DockItemsContract.DockItems.TITLE + " TEXT," +
+            DockItemsContract.DockItems.INTENT + " TEXT," +
+            DockItemsContract.DockItems.ITEM_TYPE + " INTEGER," +
+            DockItemsContract.DockItems.ICON_TYPE + " INTEGER," +
+            DockItemsContract.DockItems.ICON_PACKAGE + " TEXT," +
+            DockItemsContract.DockItems.ICON_RESOURCE + " TEXT," +
+            DockItemsContract.DockItems.ICON + " BLOB," +
             DockItemsContract.DockItems.POSITION+ " INTEGER NOT NULL DEFAULT 9999);" };
 
     /**
@@ -44,11 +67,6 @@ public class DbHelper extends SQLiteOpenHelper {
      * {@link #getReadableDatabase} is called.
      *
      * @param context to use to open or create the database
-     * @param name    of the database file, or null for an in-memory database
-     * @param factory to use for creating cursor objects, or null for the default
-     * @param version number of the database (starting at 1); if the database is older,
-     *                {@link #onUpgrade} will be used to upgrade the database; if the database is
-     *                newer, {@link #onDowngrade} will be used to downgrade the database
      */
     public DbHelper(Context context) {
         super(context, DB_NAME, null, VERSION);
@@ -88,8 +106,78 @@ public class DbHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onCreate(SQLiteDatabase db) {
+        LOGD(TAG, "onCreate()");
         for (String schema : SCHEMAS) {
             db.execSQL(schema);
+        }
+
+        // Debug stuff.
+        final PackageManager manager = mContext.getPackageManager();
+
+        final Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+        final List<ResolveInfo> apps = manager.queryIntentActivities(mainIntent, 0);
+        Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
+
+        if (apps != null) {
+            final int count = apps.size();
+
+            for (ResolveInfo info : apps) {
+                final String title = info.loadLabel(manager).toString();
+
+                final ComponentName className = new ComponentName(
+                        info.activityInfo.applicationInfo.packageName,
+                        info.activityInfo.name);
+                final int launchFlags = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED;
+                final Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.addCategory(Intent.CATEGORY_LAUNCHER);
+                intent.setComponent(className);
+                intent.setFlags(launchFlags);
+
+                final Drawable fullResIcon = ImageUtils.getFullResIcon(mContext, info.activityInfo);
+                final Bitmap iconBitmap = ImageUtils.createIconBitmap(mContext, fullResIcon);
+                final byte[] flattenedIcon = ImageUtils.flattenBitmap(iconBitmap);
+
+                ContentValues values = new ContentValues();
+                values.put(DockItemsContract.DockItems.TITLE, title);
+                values.put(DockItemsContract.DockItems.INTENT, intent.toUri(0));
+                values.put(DockItemsContract.DockItems.ICON, flattenedIcon);
+
+                db.insert(DockItemsContract.DockItems.TABLE_NAME, null, values);
+//
+//
+//                final AppInfo application = new AppInfo();
+//
+//                application.title = info.loadLabel(manager);
+//
+//                application.setActivity(new ComponentName(
+//                        info.activityInfo.applicationInfo.packageName,
+//                        info.activityInfo.name),
+//                        Intent.FLAG_ACTIVITY_NEW_TASK
+//                                | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+//
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+//                    final int iconId = info.getIconResource();
+//                    final ActivityManager activityManager = (ActivityManager)
+//                            this.getBaseContext().getSystemService(Context.ACTIVITY_SERVICE);
+//                    final int iconDpi = activityManager.getLauncherLargeIconDensity();
+//
+//                    try {
+//                        final Resources resources = manager.getResourcesForApplication(
+//                                info.activityInfo.applicationInfo);
+//                        application.icon = resources.getDrawableForDensity(iconId, iconDpi);
+//                    } catch (PackageManager.NameNotFoundException e) {
+//                        application.icon = info.activityInfo.loadIcon(manager);
+//                    } catch (RuntimeException e) {
+//                        // TODO: Look back at example for handling resource not found.
+//                    }
+//                } else {
+//                    application.icon = info.loadIcon(manager);
+//                }
+//
+//                mApplications.add(application);
+            }
         }
     }
 }

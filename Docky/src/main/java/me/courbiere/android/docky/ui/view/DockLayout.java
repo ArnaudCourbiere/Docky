@@ -18,16 +18,13 @@ import me.courbiere.android.docky.R;
 import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
- * Dock View.
+ * Dock Layout. This View is responsible for managing the dock positioning, it sits on top of every
+ * other window. This View is intercepting motion events and determines if the motion events
+ * should be forwarded to the actual dock (ex: click on a list item) or if the user is trying
+ * to drag the dock in and out from the edge.
  */
 public class DockLayout extends RelativeLayout {
     private static final String TAG = "DockLayout";
-
-    public static final int POSITION_LEFT = 0;
-    public static final int POSITION_RIGHT = 1;
-
-    private static final int DOCK_CLOSED = 0;
-    private static final int DOCK_OPENED = 1;
 
     /**
      * Indicates that the dock is in an idle, settled state. No animation is in progress.
@@ -49,6 +46,10 @@ public class DockLayout extends RelativeLayout {
      */
     private static final int MIN_FLING_VELOCITY = 400; // dips per second
 
+    /**
+     * Multiplier for how sensitive the helper should be about detecting the start of a drag.
+     * Larger values are more sensitive. 1.0f is normal.
+     */
     private static final float TOUCH_SLOP_SENSITIVITY = 1f;
 
     /**
@@ -67,15 +68,21 @@ public class DockLayout extends RelativeLayout {
      */
     private View mDock;
 
-    private int mDockState;
+    /**
+     * Window Manager. Needed to attach the DockLayout to the window (on top of every other window)
+     * and to resize the DockLayout.
+     */
     private WindowManager mWindowManager;
 
+    /**
+     * DragHelper used to interpret motion events and drag the dock.
+     */
     private final ViewDragHelper mDragger;
+
+    /**
+     * ViewDragHelper.Callback used to communicate with the ViewDragHelper and receive callbacks.
+     */
     private final ViewDragCallback mDragCallback;
-
-
-    private float mInitialMotionX;
-    private float mInitialMotionY;
 
     public DockLayout(Context context) {
         this(context, null);
@@ -92,13 +99,12 @@ public class DockLayout extends RelativeLayout {
         final float minVel = MIN_FLING_VELOCITY * density;
 
         mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        mDockState = DOCK_OPENED;
-
         mDragCallback = new ViewDragCallback();
         mDragger = ViewDragHelper.create(this, TOUCH_SLOP_SENSITIVITY, mDragCallback);
         mDragger.setEdgeTrackingEnabled(ViewDragHelper.EDGE_RIGHT | ViewDragHelper.EDGE_LEFT);
         mDragger.setMinVelocity(minVel);
-        // TODO: Check implementation.
+
+        // TODO: Use when implementing choice of dock position (left or right).
         // mDragCallback.setDragger(mDragger);
 
         // Retrieve custom attributes
@@ -113,6 +119,7 @@ public class DockLayout extends RelativeLayout {
         }
     }
 
+    // TODO: Remove get and set position as well as custom view attribute.
     public int getPosition() {
         return mPosition;
     }
@@ -127,6 +134,9 @@ public class DockLayout extends RelativeLayout {
         requestLayout();
     }
 
+    /**
+     * Attaches this DockLayout to the window. This DockLayout will be drawn on top of all other windows.
+     */
     public void attachToWindow() {
         final int dockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
 
@@ -155,6 +165,8 @@ public class DockLayout extends RelativeLayout {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        // If the dock is invisible, don't recompute the View's layout to prevent the
+        // dock to be repositioned in its initial location. The dock is set to invisible when closed.
         if (mDock.getVisibility() != INVISIBLE) {
             super.onLayout(changed, l, t, r, b);
         }
@@ -170,14 +182,9 @@ public class DockLayout extends RelativeLayout {
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                final float x = ev.getRawX();
-                final float y = ev.getRawY();
-                mInitialMotionX = x;
-                mInitialMotionY = y;
-
-                // If DockLayout is folded, unfold.
                 final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
 
+                // If DockLayout is folded, unfold.
                 if (dockLayoutLp.x == -mDock.getWidth()) {
                     unfoldContainer();
                 }
@@ -198,9 +205,6 @@ public class DockLayout extends RelativeLayout {
                 break;
         }
 
-        LOGD(TAG, Boolean.toString(interceptForDrag));
-        LOGD(TAG, Boolean.toString(interceptForTap));
-
         return interceptForDrag || interceptForTap;
     }
 
@@ -208,18 +212,11 @@ public class DockLayout extends RelativeLayout {
     public boolean onTouchEvent(MotionEvent ev) {
         mDragger.processTouchEvent(ev);
 
-        int leftMargin;
-        int rightMargin;
-        final View dock = getDockView();
-        final LayoutParams dockLp = (LayoutParams) dock.getLayoutParams();
-
         final int action = ev.getActionMasked();
         boolean wantTouchEvents = true;
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                mInitialMotionX = ev.getRawX();
-                mInitialMotionY = ev.getRawY();
                 break;
 
             case MotionEvent.ACTION_UP:
@@ -256,6 +253,11 @@ public class DockLayout extends RelativeLayout {
         return getChildAt(0);
     }
 
+    /**
+     * Returns the dock positioning offset, 1 is fully open, 0 is fully closed.
+     *
+     * @return dock positioning offset.
+     */
     private float getDockOffset() {
         final int dockWidth = mDock.getWidth();
         return 1 - ((float) (mDock.getLeft() - (getWidth() - dockWidth)) / dockWidth);
@@ -281,16 +283,25 @@ public class DockLayout extends RelativeLayout {
         return super.drawChild(canvas, child, drawingTime);
     }
 
+    /**
+     * Smoothly open the dock.
+     */
     public void open() {
         mDragger.smoothSlideViewTo(mDock, getWidth() - mDock.getWidth(), mDock.getTop());
         invalidate();
     }
 
+    /**
+     * Smoothly close the dock.
+     */
     public void close() {
         mDragger.smoothSlideViewTo(mDock, getWidth(), mDock.getTop());
         invalidate();
     }
 
+    /**
+     * Fold this DockLayout. This function is called when the dock has settled in closed position.
+     */
     private void foldContainer() {
         mDockLayoutHeight = getHeight();
         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
@@ -301,6 +312,9 @@ public class DockLayout extends RelativeLayout {
         mDock.setVisibility(INVISIBLE);
     }
 
+    /**
+     * Unfold this DockLayout. This function is called when the dock has settled in opened position.
+     */
     private void unfoldContainer() {
         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
         dockLayoutLp.x = 0;
@@ -309,6 +323,9 @@ public class DockLayout extends RelativeLayout {
         mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
     }
 
+    /**
+     * Listener used to communicate with the ViewDragHelper.
+     */
     private class ViewDragCallback extends ViewDragHelper.Callback {
 
         @Override
@@ -327,8 +344,6 @@ public class DockLayout extends RelativeLayout {
 
                     break;
             }
-
-            mDockState = state;
         }
 
         @Override
