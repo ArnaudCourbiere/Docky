@@ -1,44 +1,38 @@
 package me.courbiere.android.docky.service;
 
-import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.SimpleCursorAdapter;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.item.AppInfo;
 import me.courbiere.android.docky.provider.DockItemsContract;
-import me.courbiere.android.docky.ui.adapter.DockItemArrayAdapter;
 import me.courbiere.android.docky.ui.view.DockLayout;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
@@ -70,6 +64,16 @@ public class DockService extends Service {
      * Adapter used to display the dock items.
      */
     private SimpleCursorAdapter mItemsAdapter;
+
+    /**
+     * Cursor used with the SimpleCursorAdapter.
+     */
+    private Cursor mCursor;
+
+    /**
+     * Icon cache.
+     */
+    private HashMap<ComponentName, Bitmap> mCache = new HashMap<>(50);
 
     /**
      * Instance variable to check if the service is running.
@@ -146,10 +150,10 @@ public class DockService extends Service {
         final String[] from = new String[] {DockItemsContract.DockItems.ICON };
         final int[] to = new int[] { R.id.app_icon };
 
-        Cursor cursor = getContentResolver().query(DockItemsContract.DockItems.CONTENT_URI,
+        mCursor = getContentResolver().query(DockItemsContract.DockItems.CONTENT_URI,
                 projection, null, null, DockItemsContract.DockItems.POSITION + " ASC");
         mItemsAdapter = new SimpleCursorAdapter(getBaseContext(), R.layout.dock_item_layout,
-                cursor, from, to, 0);
+                mCursor, from, to, 0);
 
         // Use custom binder.
         final SimpleCursorAdapter.ViewBinder binder = new SimpleCursorAdapter.ViewBinder() {
@@ -162,10 +166,26 @@ public class DockService extends Service {
                 final String columnName = cursor.getColumnName(columnIndex);
 
                 if (columnName.equals(DockItemsContract.DockItems.ICON)) {
-                    byte[] icon = cursor.getBlob(columnIndex);
                     final ImageView imageView = (ImageView) view;
-                    final Bitmap iconBitmap = BitmapFactory.decodeByteArray(icon, 0, icon.length);
-                    imageView.setImageBitmap(iconBitmap);
+                    final String intentUri = cursor.getString(
+                            cursor.getColumnIndex(DockItemsContract.DockItems.INTENT));
+
+                    try {
+                        final Intent intent = Intent.parseUri(intentUri, 0);
+                        final ComponentName component = intent.getComponent();
+                        Bitmap iconBitmap = mCache.get(component);
+
+                        if (iconBitmap == null) {
+                            final byte[] icon = cursor.getBlob(columnIndex);
+                            iconBitmap = BitmapFactory.decodeByteArray(icon, 0, icon.length);
+                            mCache.put(component, iconBitmap);
+                        }
+
+                        imageView.setImageBitmap(iconBitmap);
+                    } catch (URISyntaxException e) {
+                        return true;
+                    }
+
                     return true;
                 }
 
@@ -283,6 +303,10 @@ public class DockService extends Service {
         if (mDockLayout != null) {
             ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(mDockLayout);
             mDockLayout = null;
+        }
+
+        if (mCursor != null) {
+            mCursor.close();
         }
     }
 }
