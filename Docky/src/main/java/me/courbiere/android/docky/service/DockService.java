@@ -16,6 +16,7 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ImageView;
@@ -155,14 +156,16 @@ public class DockService extends Service {
         mItemsAdapter = new SimpleCursorAdapter(getBaseContext(), R.layout.dock_item_layout,
                 mCursor, from, to, 0);
 
+        // TODO: Improvement: use the holder pattern.
+
         // Use custom binder.
         final SimpleCursorAdapter.ViewBinder binder = new SimpleCursorAdapter.ViewBinder() {
 
             @Override
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-                LOGD(TAG, "setViewValue");
 
                 // TODO: Use icon cache + determine if Bitmap or Drawable should be used here.
+                // TODO: Find what I meant above.
                 final String columnName = cursor.getColumnName(columnIndex);
 
                 if (columnName.equals(DockItemsContract.DockItems.ICON)) {
@@ -182,6 +185,12 @@ public class DockService extends Service {
                         }
 
                         imageView.setImageBitmap(iconBitmap);
+                        imageView.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                getBaseContext().startActivity(intent);
+                            }
+                        });
                     } catch (URISyntaxException e) {
                         return true;
                     }

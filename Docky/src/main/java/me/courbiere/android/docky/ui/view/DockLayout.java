@@ -1,7 +1,9 @@
 package me.courbiere.android.docky.ui.view;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.TypedArray;
+import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
 import android.support.v4.view.ViewCompat;
@@ -11,9 +13,16 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 
+import java.net.URISyntaxException;
+import java.util.Arrays;
+
 import me.courbiere.android.docky.R;
+import me.courbiere.android.docky.provider.DockItemsContract;
+import me.courbiere.android.docky.ui.activity.AddItem;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
 
@@ -188,20 +197,55 @@ public class DockLayout extends RelativeLayout {
                 if (dockLayoutLp.x == -mDock.getWidth()) {
                     unfoldContainer();
                 }
-
-                // Should not be needed since we don't have a content view.
-                /*
-                final View child = mDragger.findTopChildUnder((int) ev.getX(), (int) ev.getY());
-
-                if (child != null && child.getId() != R.id.dock) {
-                    interceptForTap = true;
-                }
-                */
-
                 break;
 
             case MotionEvent.ACTION_UP:
-                close();
+                final float x = ev.getRawX();
+                final float y = ev.getRawY();
+                boolean close = true;
+                final ListView itemList = (ListView) findViewById(R.id.dock_item_list);
+                final int start = itemList.getFirstVisiblePosition();
+                final int end = itemList.getLastVisiblePosition();
+                final ListAdapter adapter = itemList.getAdapter();
+
+                for (int i = start; i <= end; i++) {
+                    Cursor c = (Cursor) adapter.getItem(i);
+
+                    if (c != null) {
+                        Intent intent;
+                        String intentUri = c.getString(
+                                c.getColumnIndex(DockItemsContract.DockItems.INTENT));
+
+                        try {
+                            intent = Intent.parseUri(intentUri, 0);
+                        } catch (URISyntaxException e) {
+                            throw new IllegalArgumentException("Invalid URI found: " + intentUri);
+                        }
+
+                        if (intent != null) {
+                            String className = intent.getComponent().getClassName();
+
+                            if (className != null && className.equals(AddItem.class.getName())) {
+                                LOGD(TAG, "got view");
+                                View itemView = itemList.getChildAt(i - start);
+
+                                if (itemView != null) {
+                                    int[] location = new int[2];
+                                    itemView.getLocationOnScreen(location);
+
+                                    if (x >= location[0] && x <= location[0] + itemView.getWidth()
+                                            && y >= location[1] && y <= location[1] + itemView.getHeight()) {
+                                        close = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (close) {
+                    close();
+                }
                 break;
         }
 

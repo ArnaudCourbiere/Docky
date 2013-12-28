@@ -18,7 +18,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import me.courbiere.android.docky.MainActivity;
+import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.provider.DockItemsContract;
+import me.courbiere.android.docky.ui.activity.AddItem;
 import me.courbiere.android.docky.util.ImageUtils;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
@@ -111,6 +114,25 @@ public class DbHelper extends SQLiteOpenHelper {
             db.execSQL(schema);
         }
 
+        // Add item that allows to add more apps.
+        final String addTitle = "Add";
+        final Intent addIntent = new Intent(mContext, AddItem.class);
+        addIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final ActivityManager activityManager = (ActivityManager)
+                mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        final int iconDpi = activityManager.getLauncherLargeIconDensity();
+        final Drawable addIcon = mContext.getResources().getDrawableForDensity(R.drawable.dock_action_new, iconDpi);
+        final Bitmap addBitmap = ImageUtils.createIconBitmap(mContext, addIcon);
+        final byte[] flattenedAddIcon = ImageUtils.flattenBitmap(addBitmap);
+        final int position = 10000;
+        final ContentValues addValues = new ContentValues();
+        addValues.put(DockItemsContract.DockItems.TITLE, addTitle);
+        addValues.put(DockItemsContract.DockItems.INTENT, addIntent.toUri(0));
+        addValues.put(DockItemsContract.DockItems.ICON, flattenedAddIcon);
+        addValues.put(DockItemsContract.DockItems.POSITION, position);
+        db.insert(DockItemsContract.DockItems.TABLE_NAME, null, addValues);
+
+        /*
         // Debug stuff.
         final PackageManager manager = mContext.getPackageManager();
 
@@ -123,7 +145,8 @@ public class DbHelper extends SQLiteOpenHelper {
         if (apps != null) {
             final int count = apps.size();
 
-            for (ResolveInfo info : apps) {
+            for (int i = 0; i < count; i++) {
+                ResolveInfo info = apps.get(i);
                 final String title = info.loadLabel(manager).toString();
 
                 final ComponentName className = new ComponentName(
@@ -143,41 +166,11 @@ public class DbHelper extends SQLiteOpenHelper {
                 values.put(DockItemsContract.DockItems.TITLE, title);
                 values.put(DockItemsContract.DockItems.INTENT, intent.toUri(0));
                 values.put(DockItemsContract.DockItems.ICON, flattenedIcon);
+                values.put(DockItemsContract.DockItems.POSITION, i);
 
                 db.insert(DockItemsContract.DockItems.TABLE_NAME, null, values);
-//
-//
-//                final AppInfo application = new AppInfo();
-//
-//                application.title = info.loadLabel(manager);
-//
-//                application.setActivity(new ComponentName(
-//                        info.activityInfo.applicationInfo.packageName,
-//                        info.activityInfo.name),
-//                        Intent.FLAG_ACTIVITY_NEW_TASK
-//                                | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-//
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-//                    final int iconId = info.getIconResource();
-//                    final ActivityManager activityManager = (ActivityManager)
-//                            this.getBaseContext().getSystemService(Context.ACTIVITY_SERVICE);
-//                    final int iconDpi = activityManager.getLauncherLargeIconDensity();
-//
-//                    try {
-//                        final Resources resources = manager.getResourcesForApplication(
-//                                info.activityInfo.applicationInfo);
-//                        application.icon = resources.getDrawableForDensity(iconId, iconDpi);
-//                    } catch (PackageManager.NameNotFoundException e) {
-//                        application.icon = info.activityInfo.loadIcon(manager);
-//                    } catch (RuntimeException e) {
-//                        // TODO: Look back at example for handling resource not found.
-//                    }
-//                } else {
-//                    application.icon = info.loadIcon(manager);
-//                }
-//
-//                mApplications.add(application);
             }
         }
+        */
     }
 }
