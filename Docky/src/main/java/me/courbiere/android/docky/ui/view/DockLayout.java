@@ -1,11 +1,14 @@
 package me.courbiere.android.docky.ui.view;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
@@ -16,13 +19,10 @@ import android.view.WindowManager;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
-
-import java.net.URISyntaxException;
-import java.util.Arrays;
+import android.widget.Toast;
 
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.provider.DockItemsContract;
-import me.courbiere.android.docky.ui.activity.AddItem;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
 
@@ -36,19 +36,39 @@ public class DockLayout extends RelativeLayout {
     private static final String TAG = "DockLayout";
 
     /**
+     * Static Intent action for adding items.
+     */
+    public static final String ADD_ITEM = "me.courbiere.android.docky.add_item";
+
+    /**
      * Indicates that the dock is in an idle, settled state. No animation is in progress.
      */
-    private static final int STATE_IDLE = ViewDragHelper.STATE_IDLE;
+    public static final int STATE_IDLE = ViewDragHelper.STATE_IDLE;
 
     /**
      * Indicates that the dock is currently being dragged by the user.
      */
-    private static final int STATE_DRAGGING = ViewDragHelper.STATE_DRAGGING;
+    public static final int STATE_DRAGGING = ViewDragHelper.STATE_DRAGGING;
 
     /**
      * Indicates that the dock is in the process of settling to a final position.
      */
-    private static final int STATE_SETTLING = ViewDragHelper.STATE_SETTLING;
+    public static final int STATE_SETTLING = ViewDragHelper.STATE_SETTLING;
+
+    /**
+     * The dock is unlocked.
+     */
+    public static final int LOCK_MODE_UNLOCKED = 0;
+
+    /**
+     * The dock is locked in closed mode. The app may open it, not the user.
+     */
+    public static final int LOCK_MODE_LOCKED_CLOSED = 1;
+
+    /**
+     * The dock is locked open, the app may close it, not the user.
+     */
+    public static final int LOCK_MODE_LOCKED_OPEN = 2;
 
     /**
      * Minimum velocity that will be detected as a fling
@@ -92,6 +112,27 @@ public class DockLayout extends RelativeLayout {
      * ViewDragHelper.Callback used to communicate with the ViewDragHelper and receive callbacks.
      */
     private final ViewDragCallback mDragCallback;
+
+    /**
+     * Dock current lock mode.
+     */
+    private int mLockMode = LOCK_MODE_UNLOCKED;
+
+    /**
+     * Broadcast Receiver handling request to add new items to the dock.
+     */
+    private final BroadcastReceiver mAddItemReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mLockMode == LOCK_MODE_UNLOCKED) {
+                setLockMode(LOCK_MODE_LOCKED_OPEN);
+                Toast.makeText(getContext(), "Locked", Toast.LENGTH_SHORT).show();
+            } else {
+                setLockMode(LOCK_MODE_UNLOCKED);
+                Toast.makeText(getContext(), "Unlocked", Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
 
     public DockLayout(Context context) {
         this(context, null);
@@ -149,6 +190,8 @@ public class DockLayout extends RelativeLayout {
     public void attachToWindow() {
         final int dockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
 
+        mDock = findViewById(R.id.dock);
+
         final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
                 dockLayoutWidth,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -165,11 +208,27 @@ public class DockLayout extends RelativeLayout {
         layoutParams.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
         layoutParams.setTitle(getContext().getString(R.string.app_name));
         mWindowManager.addView(this, layoutParams);
+
+        close();
     }
 
     @Override
     protected void onAttachedToWindow() {
-        mDock = findViewById(R.id.dock);
+        super.onAttachedToWindow();
+
+        // Register broadcast receiver.
+        final LocalBroadcastManager manager = LocalBroadcastManager.getInstance(getContext());
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ADD_ITEM);
+        manager.registerReceiver(mAddItemReceiver, filter);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        final LocalBroadcastManager manager = LocalBroadcastManager.getInstance(getContext());
+        manager.unregisterReceiver(mAddItemReceiver);
     }
 
     @Override
@@ -212,31 +271,22 @@ public class DockLayout extends RelativeLayout {
                     Cursor c = (Cursor) adapter.getItem(i);
 
                     if (c != null) {
-                        Intent intent;
-                        String intentUri = c.getString(
-                                c.getColumnIndex(DockItemsContract.DockItems.INTENT));
+                        final int sticky = c.getInt(
+                                c.getColumnIndex(DockItemsContract.DockItems.STICKY));
 
-                        try {
-                            intent = Intent.parseUri(intentUri, 0);
-                        } catch (URISyntaxException e) {
-                            throw new IllegalArgumentException("Invalid URI found: " + intentUri);
-                        }
+                        if (sticky == 1) {
+                            View itemView = itemList.getChildAt(i - start);
 
-                        if (intent != null) {
-                            String className = intent.getComponent().getClassName();
+                            if (itemView != null) {
+                                int[] location = new int[2];
+                                itemView.getLocationOnScreen(location);
+                                final int viewX = location[0];
+                                final int viewY = location[1];
 
-                            if (className != null && className.equals(AddItem.class.getName())) {
-                                LOGD(TAG, "got view");
-                                View itemView = itemList.getChildAt(i - start);
-
-                                if (itemView != null) {
-                                    int[] location = new int[2];
-                                    itemView.getLocationOnScreen(location);
-
-                                    if (x >= location[0] && x <= location[0] + itemView.getWidth()
-                                            && y >= location[1] && y <= location[1] + itemView.getHeight()) {
-                                        close = false;
-                                    }
+                                if (x >= viewX && x <= viewX + itemView.getWidth()
+                                        && y >= viewY && y <= viewY + itemView.getHeight()) {
+                                    close = false;
+                                    break;
                                 }
                             }
                         }
@@ -275,7 +325,9 @@ public class DockLayout extends RelativeLayout {
 
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_OUTSIDE:
-                close();
+                if (getLockMode() == LOCK_MODE_UNLOCKED) {
+                    close();
+                }
                 break;
         }
 
@@ -328,6 +380,36 @@ public class DockLayout extends RelativeLayout {
     }
 
     /**
+     * Enable or disable interaction with the dock.
+     *
+     * @param lockMode The new lock mode for the dock.
+     *
+     * @see #LOCK_MODE_UNLOCKED
+     * @see #LOCK_MODE_LOCKED_CLOSED
+     * @see #LOCK_MODE_LOCKED_OPEN
+     */
+    public void setLockMode(int lockMode) {
+        mLockMode = lockMode;
+
+        if (lockMode != LOCK_MODE_UNLOCKED) {
+            mDragger.cancel();
+        }
+
+        switch (lockMode) {
+            case LOCK_MODE_LOCKED_OPEN:
+                open();
+                break;
+            case LOCK_MODE_LOCKED_CLOSED:
+                close();
+                break;
+        }
+    }
+
+    public int getLockMode() {
+        return mLockMode;
+    }
+
+    /**
      * Smoothly open the dock.
      */
     public void open() {
@@ -374,7 +456,7 @@ public class DockLayout extends RelativeLayout {
 
         @Override
         public boolean tryCaptureView(View child, int pointerId) {
-            return child.getId() == R.id.dock;
+            return child.getId() == R.id.dock && getLockMode() == LOCK_MODE_UNLOCKED;
         }
 
         @Override
@@ -409,7 +491,9 @@ public class DockLayout extends RelativeLayout {
 
         @Override
         public void onEdgeDragStarted(int edgeFlags, int pointerId) {
-            mDragger.captureChildView(getDockView(), pointerId);
+            if (getLockMode() == LOCK_MODE_UNLOCKED) {
+                mDragger.captureChildView(getDockView(), pointerId);
+            }
         }
 
         @Override

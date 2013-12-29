@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -14,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -147,7 +149,8 @@ public class DockService extends Service {
                 DockItemsContract.DockItems._ID,
                 DockItemsContract.DockItems.INTENT,
                 DockItemsContract.DockItems.TITLE,
-                DockItemsContract.DockItems.ICON };
+                DockItemsContract.DockItems.ICON,
+                DockItemsContract.DockItems.STICKY };
         final String[] from = new String[] {DockItemsContract.DockItems.ICON };
         final int[] to = new int[] { R.id.app_icon };
 
@@ -188,7 +191,14 @@ public class DockService extends Service {
                         imageView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                getBaseContext().startActivity(intent);
+                                final String action = intent.getAction();
+                                final Context context = getBaseContext();
+
+                                if (action.equals(Intent.ACTION_MAIN)) {
+                                    context.startActivity(intent);
+                                } else {
+                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                                }
                             }
                         });
                     } catch (URISyntaxException e) {

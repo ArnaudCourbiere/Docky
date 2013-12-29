@@ -54,7 +54,8 @@ public class DockItemsProvider extends ContentProvider {
                 DockItemsContract.DockItems.ICON_PACKAGE,
                 DockItemsContract.DockItems.ICON_RESOURCE,
                 DockItemsContract.DockItems.ICON,
-                DockItemsContract.DockItems.POSITION };
+                DockItemsContract.DockItems.POSITION,
+                DockItemsContract.DockItems.STICKY };
     }
 
     // URI matching table.

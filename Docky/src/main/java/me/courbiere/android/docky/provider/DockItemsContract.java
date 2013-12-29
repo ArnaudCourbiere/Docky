@@ -85,5 +85,8 @@ public class DockItemsContract {
 
         /** The item position in the dock */
         public static final String POSITION = "position";
+
+        /** Wether the dock should automatically close after the item is being pressed */
+        public static final String STICKY = "sticky";
     }
 }

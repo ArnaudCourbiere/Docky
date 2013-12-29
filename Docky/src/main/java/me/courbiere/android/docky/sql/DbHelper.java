@@ -21,7 +21,7 @@ import java.util.List;
 import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.provider.DockItemsContract;
-import me.courbiere.android.docky.ui.activity.AddItem;
+import me.courbiere.android.docky.ui.view.DockLayout;
 import me.courbiere.android.docky.util.ImageUtils;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
@@ -61,7 +61,8 @@ public class DbHelper extends SQLiteOpenHelper {
             DockItemsContract.DockItems.ICON_PACKAGE + " TEXT," +
             DockItemsContract.DockItems.ICON_RESOURCE + " TEXT," +
             DockItemsContract.DockItems.ICON + " BLOB," +
-            DockItemsContract.DockItems.POSITION+ " INTEGER NOT NULL DEFAULT 9999);" };
+            DockItemsContract.DockItems.POSITION + " INTEGER NOT NULL DEFAULT 9999," +
+            DockItemsContract.DockItems.STICKY + " SMALLINT NOT NULL DEFAULT 0);" };
 
     /**
      * Create a helper object to create, open, and/or manage a database.
@@ -116,8 +117,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
         // Add item that allows to add more apps.
         final String addTitle = "Add";
-        final Intent addIntent = new Intent(mContext, AddItem.class);
-        addIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Intent addIntent = new Intent();
+        addIntent.setAction(DockLayout.ADD_ITEM);
         final ActivityManager activityManager = (ActivityManager)
                 mContext.getSystemService(Context.ACTIVITY_SERVICE);
         final int iconDpi = activityManager.getLauncherLargeIconDensity();
@@ -130,6 +131,7 @@ public class DbHelper extends SQLiteOpenHelper {
         addValues.put(DockItemsContract.DockItems.INTENT, addIntent.toUri(0));
         addValues.put(DockItemsContract.DockItems.ICON, flattenedAddIcon);
         addValues.put(DockItemsContract.DockItems.POSITION, position);
+        addValues.put(DockItemsContract.DockItems.STICKY, true);
         db.insert(DockItemsContract.DockItems.TABLE_NAME, null, addValues);
 
         /*

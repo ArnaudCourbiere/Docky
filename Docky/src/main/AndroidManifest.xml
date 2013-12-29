@@ -27,10 +27,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ui.activity.AddItem"
-            android:label="@string/add_item"/>
-
         <service
             android:name=".service.DockService"
             android:exported="false" />
