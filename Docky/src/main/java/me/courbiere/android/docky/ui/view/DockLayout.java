@@ -88,6 +88,11 @@ public class DockLayout extends RelativeLayout {
     private int mPosition;
 
     /**
+     * Dock Layout width.
+     */
+    private final int mDockLayoutWidth;
+
+    /**
      * Dock Layout height(used to restore layout width on unfold).
      */
     private int mDockLayoutHeight;
@@ -124,13 +129,19 @@ public class DockLayout extends RelativeLayout {
     private final BroadcastReceiver mAddItemReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
+
             if (mLockMode == LOCK_MODE_UNLOCKED) {
                 setLockMode(LOCK_MODE_LOCKED_OPEN);
+                //dockLayoutLp.width = WindowManager.LayoutParams.MATCH_PARENT;
                 Toast.makeText(getContext(), "Locked", Toast.LENGTH_SHORT).show();
             } else {
                 setLockMode(LOCK_MODE_UNLOCKED);
+                //dockLayoutLp.width = mDockLayoutWidth;
                 Toast.makeText(getContext(), "Unlocked", Toast.LENGTH_SHORT).show();
             }
+
+            //mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
         }
     };
 
@@ -148,6 +159,7 @@ public class DockLayout extends RelativeLayout {
         final float density = getResources().getDisplayMetrics().density;
         final float minVel = MIN_FLING_VELOCITY * density;
 
+        mDockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
         mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         mDragCallback = new ViewDragCallback();
         mDragger = ViewDragHelper.create(this, TOUCH_SLOP_SENSITIVITY, mDragCallback);
@@ -188,12 +200,10 @@ public class DockLayout extends RelativeLayout {
      * Attaches this DockLayout to the window. This DockLayout will be drawn on top of all other windows.
      */
     public void attachToWindow() {
-        final int dockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
-
         mDock = findViewById(R.id.dock);
 
         final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
-                dockLayoutWidth,
+                mDockLayoutWidth,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
 //                WindowManager.LayoutParams.TYPE_PRIORITY_PHONE,
@@ -208,8 +218,6 @@ public class DockLayout extends RelativeLayout {
         layoutParams.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
         layoutParams.setTitle(getContext().getString(R.string.app_name));
         mWindowManager.addView(this, layoutParams);
-
-        close();
     }
 
     @Override
@@ -293,7 +301,7 @@ public class DockLayout extends RelativeLayout {
                     }
                 }
 
-                if (close) {
+                if (close && getLockMode() == LOCK_MODE_UNLOCKED) {
                     close();
                 }
                 break;
