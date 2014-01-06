@@ -15,6 +15,7 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -129,19 +130,23 @@ public class DockLayout extends RelativeLayout {
     private final BroadcastReceiver mAddItemReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            /*
             final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
 
             if (mLockMode == LOCK_MODE_UNLOCKED) {
-                setLockMode(LOCK_MODE_LOCKED_OPEN);
-                //dockLayoutLp.width = WindowManager.LayoutParams.MATCH_PARENT;
-                Toast.makeText(getContext(), "Locked", Toast.LENGTH_SHORT).show();
+                //setLockMode(LOCK_MODE_LOCKED_OPEN);
+                dockLayoutLp.width = WindowManager.LayoutParams.MATCH_PARENT;
+                dockLayoutLp.height = WindowManager.LayoutParams.MATCH_PARENT;
+                //Toast.makeText(getContext(), "Locked", Toast.LENGTH_SHORT).show();
             } else {
-                setLockMode(LOCK_MODE_UNLOCKED);
-                //dockLayoutLp.width = mDockLayoutWidth;
-                Toast.makeText(getContext(), "Unlocked", Toast.LENGTH_SHORT).show();
+                //setLockMode(LOCK_MODE_UNLOCKED);
+                dockLayoutLp.width = mDockLayoutWidth;
+                dockLayoutLp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                //Toast.makeText(getContext(), "Unlocked", Toast.LENGTH_SHORT).show();
             }
 
-            //mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+            mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+            */
         }
     };
 
@@ -205,8 +210,8 @@ public class DockLayout extends RelativeLayout {
         final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
                 mDockLayoutWidth,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
-//                WindowManager.LayoutParams.TYPE_PRIORITY_PHONE,
+//                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.TYPE_PRIORITY_PHONE,
 //                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                         | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
@@ -240,7 +245,53 @@ public class DockLayout extends RelativeLayout {
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        LOGD(TAG, "onMeasure()");
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        /*
+        final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        final int imposedWidth = MeasureSpec.getSize(widthMeasureSpec);
+        final int imposedHeight = MeasureSpec.getSize(heightMeasureSpec);
+        int width = 0;
+        int height = 0;
+
+        LOGD(TAG, "dock width: " + mDock.getWidth());
+
+        switch (widthMode) {
+            case MeasureSpec.UNSPECIFIED:
+                LOGD(TAG, "width:UNSPECIFIED");
+                break;
+            case MeasureSpec.EXACTLY:
+                LOGD(TAG, "width:EXACTLY");
+                break;
+            case MeasureSpec.AT_MOST:
+                LOGD(TAG, "width:AT_MOST");
+                break;
+        }
+
+        switch (heightMode) {
+            case MeasureSpec.UNSPECIFIED:
+                LOGD(TAG, "height:UNSPECIFIED");
+                break;
+            case MeasureSpec.EXACTLY:
+                LOGD(TAG, "height:EXACTLY");
+                break;
+            case MeasureSpec.AT_MOST:
+                LOGD(TAG, "height:AT_MOST");
+                break;
+        }
+
+        setMeasuredDimension(imposedWidth, imposedHeight);
+
+        mDock.measure(widthMeasureSpec, heightMeasureSpec);
+        */
+    }
+
+    @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        LOGD(TAG, "onLayout()");
+
         // If the dock is invisible, don't recompute the View's layout to prevent the
         // dock to be repositioned in its initial location. The dock is set to invisible when closed.
         if (mDock.getVisibility() != INVISIBLE) {
@@ -253,8 +304,6 @@ public class DockLayout extends RelativeLayout {
         final int action = ev.getActionMasked();
 
         final boolean interceptForDrag = mDragger.shouldInterceptTouchEvent(ev);
-
-        boolean interceptForTap = false;
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
@@ -307,7 +356,7 @@ public class DockLayout extends RelativeLayout {
                 break;
         }
 
-        return interceptForDrag || interceptForTap;
+        return interceptForDrag;
     }
 
     @Override
@@ -437,24 +486,32 @@ public class DockLayout extends RelativeLayout {
      * Fold this DockLayout. This function is called when the dock has settled in closed position.
      */
     private void foldContainer() {
+        mDock.setVisibility(INVISIBLE);
+        requestLayout();
+        /*
         mDockLayoutHeight = getHeight();
         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
-        dockLayoutLp.x = -mDock.getWidth();
-        //dockLayoutLp.height = 100;
+//        dockLayoutLp.x = -mDock.getWidth();
+//        dockLayoutLp.width= mDockLayoutWidth;
+//        dockLayoutLp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         dockLayoutLp.flags |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
         mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
-        mDock.setVisibility(INVISIBLE);
+        */
     }
 
     /**
      * Unfold this DockLayout. This function is called when the dock has settled in opened position.
      */
     private void unfoldContainer() {
+        requestLayout();
+        /*
         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
-        dockLayoutLp.x = 0;
-        //dockLayoutLp.height = mDockLayoutHeight;
+//        dockLayoutLp.x = 0;
+//        dockLayoutLp.width= WindowManager.LayoutParams.MATCH_PARENT;
+//        dockLayoutLp.height = WindowManager.LayoutParams.MATCH_PARENT;
         dockLayoutLp.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
         mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+        */
     }
 
     /**
@@ -474,6 +531,13 @@ public class DockLayout extends RelativeLayout {
                     // If drawer is closed, fold container.
                     if (mDock.getLeft() == getWidth()) {
                         foldContainer();
+                        /*
+                    } else {
+                        final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
+                        dockLayoutLp.width = mDockLayoutWidth;
+                        dockLayoutLp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                        mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+                        */
                     }
 
                     break;
