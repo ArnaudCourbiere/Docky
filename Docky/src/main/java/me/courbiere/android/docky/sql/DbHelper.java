@@ -21,6 +21,7 @@ import java.util.List;
 import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.provider.DockItemsContract;
+import me.courbiere.android.docky.ui.activity.ManageItems;
 import me.courbiere.android.docky.ui.view.DockLayout;
 import me.courbiere.android.docky.util.ImageUtils;
 
@@ -117,8 +118,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
         // Add item that allows to add more apps.
         final String addTitle = "Add";
-        final Intent addIntent = new Intent();
-        addIntent.setAction(DockLayout.ADD_ITEM);
+        final Intent addIntent = new Intent(mContext, ManageItems.class);
+        addIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final ActivityManager activityManager = (ActivityManager)
                 mContext.getSystemService(Context.ACTIVITY_SERVICE);
         final int iconDpi = activityManager.getLauncherLargeIconDensity();

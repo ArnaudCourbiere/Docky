@@ -1,10 +1,8 @@
 package me.courbiere.android.docky;
 
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -13,13 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import me.courbiere.android.docky.service.DockService;
-
-import static me.courbiere.android.docky.util.LogUtils.*;
 
 public class MainActivity extends FragmentActivity {
     private static final String TAG = "MainActivity";

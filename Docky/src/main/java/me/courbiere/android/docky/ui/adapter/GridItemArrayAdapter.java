@@ -16,16 +16,16 @@ import me.courbiere.android.docky.item.AppInfo;
 import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
- * DockItemArrayAdapter.
+ * GridItemArrayAdapter.
  */
-public class DockItemArrayAdapter extends ArrayAdapter<AppInfo> {
-    private static final String TAG = "DockItemArrayAdapter";
+public class GridItemArrayAdapter extends ArrayAdapter<AppInfo> {
+    private static final String TAG = "GridItemArrayAdapter";
 
     private Context mContext;
     private int mLayoutResourceId;
     private List<AppInfo> mDockItems;
 
-    public DockItemArrayAdapter(Context context, int layoutResourceId, List<AppInfo> dockItems) {
+    public GridItemArrayAdapter(Context context, int layoutResourceId, List<AppInfo> dockItems) {
         super(context, layoutResourceId, dockItems);
 
         mContext = context;
@@ -43,7 +43,7 @@ public class DockItemArrayAdapter extends ArrayAdapter<AppInfo> {
 
             holder = new ViewHolder();
             holder.icon = (ImageView) convertView.findViewById(R.id.app_icon);
-            // holder.name = (TextView) convertView.findViewById(R.id.app_name);
+            holder.name = (TextView) convertView.findViewById(R.id.app_name);
 
             convertView.setTag(holder);
         } else {
@@ -53,7 +53,8 @@ public class DockItemArrayAdapter extends ArrayAdapter<AppInfo> {
         final AppInfo app = mDockItems.get(position);
 
         holder.icon.setImageDrawable(app.icon);
-        // holder.name.setText(app.title);
+        holder.name.setText(app.title);
+        /*
         holder.icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -61,12 +62,13 @@ public class DockItemArrayAdapter extends ArrayAdapter<AppInfo> {
                 getContext().startActivity(app.intent);
             }
         });
+        */
 
         return convertView;
     }
 
     private class ViewHolder {
         public ImageView icon;
-        // public TextView name;
+        public TextView name;
     }
 }

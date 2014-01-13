@@ -46,8 +46,6 @@ import static me.courbiere.android.docky.util.LogUtils.*;
 public class DockService extends Service {
     private static final String TAG = "DockService";
 
-    private ArrayList<AppInfo> mApplications;
-
     /**
      * Dock Layout.
      */
@@ -89,12 +87,10 @@ public class DockService extends Service {
      */
     @Override
     public void onCreate() {
-        // TODO
         sRunning = true;
 
         goToForeground();
         initListView();
-        // initListeners();
 
         mDockLayout.attachToWindow();
     }
@@ -166,9 +162,6 @@ public class DockService extends Service {
 
             @Override
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-
-                // TODO: Use icon cache + determine if Bitmap or Drawable should be used here.
-                // TODO: Find what I meant above.
                 final String columnName = cursor.getColumnName(columnIndex);
 
                 if (columnName.equals(DockItemsContract.DockItems.ICON)) {
@@ -191,14 +184,7 @@ public class DockService extends Service {
                         imageView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                final String action = intent.getAction();
-                                final Context context = getBaseContext();
-
-                                if (action.equals(Intent.ACTION_MAIN)) {
-                                    context.startActivity(intent);
-                                } else {
-                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-                                }
+                            getBaseContext().startActivity(intent);
                             }
                         });
                     } catch (URISyntaxException e) {
@@ -214,83 +200,6 @@ public class DockService extends Service {
 
         mItemsAdapter.setViewBinder(binder);
         mItemList.setAdapter(mItemsAdapter);
-    }
-
-    private void initListeners() {
-        mItemList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                LOGD(TAG, "item click");
-                final AppInfo app = (AppInfo) parent.getAdapter().getItem(position);
-                startActivity(app.intent);
-            }
-        });
-    }
-
-    /**
-     * Loads the list of installed applications in mApplications.
-     *
-     * @param isLaunching indicates whether the Activity is launching or not.
-     */
-    private void loadApplications(boolean isLaunching) {
-        if (isLaunching && mApplications != null) {
-            return;
-        }
-
-        final PackageManager manager = getPackageManager();
-
-        final Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-
-        final List<ResolveInfo> apps = manager.queryIntentActivities(mainIntent, 0);
-        Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
-
-        if (apps != null) {
-            final int count = apps.size();
-
-            if (mApplications == null) {
-                mApplications = new ArrayList<>(count);
-            }
-
-            mApplications.clear();
-
-            /*
-            for (int i = 0; i < count; i++) {
-                final AppInfo application = new AppInfo();
-                final ResolveInfo info = apps.get(i);
-
-                application.title = info.loadLabel(manager);
-
-                application.setActivity(new ComponentName(
-                        info.activityInfo.applicationInfo.packageName,
-                        info.activityInfo.name),
-                        Intent.FLAG_ACTIVITY_NEW_TASK
-                                | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-                    final int iconId = info.getIconResource();
-                    final ActivityManager activityManager = (ActivityManager)
-                            this.getBaseContext().getSystemService(Context.ACTIVITY_SERVICE);
-                    final int iconDpi = activityManager.getLauncherLargeIconDensity();
-
-                    try {
-                        final Resources resources = manager.getResourcesForApplication(
-                                info.activityInfo.applicationInfo);
-                        application.icon = resources.getDrawableForDensity(iconId, iconDpi);
-                    } catch (PackageManager.NameNotFoundException e) {
-                        application.icon = info.activityInfo.loadIcon(manager);
-                    } catch (RuntimeException e) {
-                        // TODO: Look back at example for handling resource not found.
-                    }
-                } else {
-                    application.icon = info.loadIcon(manager);
-                }
-
-                mApplications.add(application);
-            }
-            */
-        }
     }
 
     /**

@@ -27,6 +27,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.activity.ManageItems"
+            android:label="@string/manage_dock_items"/>
+
         <service
             android:name=".service.DockService"
             android:exported="false" />

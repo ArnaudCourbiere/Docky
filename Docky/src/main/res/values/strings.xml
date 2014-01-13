@@ -7,6 +7,6 @@
 
     <string name="start">Start</string>
     <string name="stop">Stop</string>
-    <string name="add_item">Add Item</string>
+    <string name="manage_dock_items">Manage Dock Items</string>
 
 </resources>
