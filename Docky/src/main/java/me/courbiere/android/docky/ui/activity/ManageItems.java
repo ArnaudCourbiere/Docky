@@ -2,11 +2,14 @@ package me.courbiere.android.docky.ui.activity;
 
 import android.app.ActivityManager;
 import android.content.ComponentName;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ProgressBar;
 
@@ -26,7 +30,9 @@ import java.util.List;
 
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.item.AppInfo;
+import me.courbiere.android.docky.provider.DockItemsContract;
 import me.courbiere.android.docky.ui.adapter.GridItemArrayAdapter;
+import me.courbiere.android.docky.util.ImageUtils;
 
 /**
  * Allowing user to manage items that appear in the dock.
@@ -83,6 +89,25 @@ public class ManageItems extends FragmentActivity {
             View rootView = inflater.inflate(R.layout.fragment_item_grid, container, false);
             mLoader = (ProgressBar) rootView.findViewById(R.id.app_list_loader);
             mAppGrid = (GridView) rootView.findViewById(R.id.app_list);
+            mAppGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    AppInfo appInfo = mApplications.get(position);
+
+                    final Bitmap bitmapIcon = ImageUtils.createIconBitmap(getActivity(), appInfo.icon);
+                    final byte[] flattenedIcon = ImageUtils.flattenBitmap(bitmapIcon);
+
+                    ContentResolver contentResolver = getActivity().getContentResolver();
+                    ContentValues values = new ContentValues();
+                    values.put(DockItemsContract.DockItems.TITLE, appInfo.title.toString());
+                    values.put(DockItemsContract.DockItems.INTENT, appInfo.intent.toUri(0));
+                    values.put(DockItemsContract.DockItems.ICON, flattenedIcon);
+                    //values.put(DockItemsContract.DockItems.POSITION, position);
+
+                    contentResolver.insert(DockItemsContract.DockItems.CONTENT_URI, values);
+                }
+            });
 
             new AppsLoader().execute();
 

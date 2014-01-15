@@ -119,7 +119,7 @@ public class DbHelper extends SQLiteOpenHelper {
         // Add item that allows to add more apps.
         final String addTitle = "Add";
         final Intent addIntent = new Intent(mContext, ManageItems.class);
-        addIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        addIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         final ActivityManager activityManager = (ActivityManager)
                 mContext.getSystemService(Context.ACTIVITY_SERVICE);
         final int iconDpi = activityManager.getLauncherLargeIconDensity();
