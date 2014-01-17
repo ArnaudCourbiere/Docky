@@ -1,6 +1,8 @@
 package me.courbiere.android.docky.ui.adapter;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.Cursor;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,8 +14,7 @@ import java.util.List;
 
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.item.AppInfo;
-
-import static me.courbiere.android.docky.util.LogUtils.*;
+import me.courbiere.android.docky.provider.DockItemsContract;
 
 /**
  * GridItemArrayAdapter.
@@ -31,6 +32,9 @@ public class GridItemArrayAdapter extends ArrayAdapter<AppInfo> {
         mContext = context;
         mLayoutResourceId = layoutResourceId;
         mDockItems = dockItems;
+
+        ContentResolver contentResolver = context.getContentResolver();
+        Cursor cursor = contentResolver.query(DockItemsContract.DockItems.CONTENT_URI, null, null, null, null);
     }
 
     @Override
@@ -38,7 +42,8 @@ public class GridItemArrayAdapter extends ArrayAdapter<AppInfo> {
         ViewHolder holder;
 
         if (convertView == null) {
-            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater inflater = (LayoutInflater) mContext
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(mLayoutResourceId, parent, false);
 
             holder = new ViewHolder();

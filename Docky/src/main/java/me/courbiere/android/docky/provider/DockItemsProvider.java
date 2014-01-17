@@ -121,9 +121,14 @@ public class DockItemsProvider extends ContentProvider {
 
         // TODO: See waitForAccess in ContactsProvider2.java and check if needed.
 
-        // Use defaults projection if none is supplied.
+        // Use default projection if none is supplied.
         if (projection == null) {
             projection = this.getDefaultProjection(uri);
+        }
+
+        // Use default sort order if non is supplied.
+        if (sortOrder == null) {
+            sortOrder = DockItemsContract.DockItems.POSITION;
         }
 
         final SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
