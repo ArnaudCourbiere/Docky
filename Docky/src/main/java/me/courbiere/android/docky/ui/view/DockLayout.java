@@ -8,6 +8,7 @@ import android.os.Parcelable;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -194,23 +195,18 @@ public class DockLayout extends RelativeLayout {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        LOGD(TAG, "onLayout()");
+        int marginTop= (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 25, getResources().getDisplayMetrics());
 
-        // If the dock is invisible, don't recompute the View's layout to prevent the
-        // dock to be repositioned in its initial location. The dock is set to invisible when closed.
-        if (mDock.getVisibility() != INVISIBLE) {
-            super.onLayout(changed, l, t, r, b);
-            /*
-            int horizontalOffset = getMeasuredWidth() - mDock.getMeasuredWidth();
-            int verticalOffset = (getMeasuredHeight() - mDock.getMeasuredHeight()) / 2;
+        int left = getMeasuredWidth() - mDock.getMeasuredWidth();
+        int right = mDock.getMeasuredWidth() + left;
 
-            mDock.layout(
-                    horizontalOffset,
-                    verticalOffset,
-                    mDock.getMeasuredWidth() + horizontalOffset,
-                    mDock.getMeasuredHeight() + verticalOffset);
-            */
+        if (mDock.getLeft() != (getWidth() - mDock.getWidth()) * 2) {
+            left += mDock.getLeft();
+            right += mDock.getLeft();
         }
+
+        mDock.layout(left, t + marginTop, right, b);
     }
 
     @Override

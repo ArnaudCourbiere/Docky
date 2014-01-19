@@ -14,6 +14,8 @@ import android.text.TextUtils;
 
 import me.courbiere.android.docky.sql.DbHelper;
 
+import static me.courbiere.android.docky.util.LogUtils.*;
+
 /**
  * Dock Item Content Provider.
  *

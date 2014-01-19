@@ -2,12 +2,19 @@ package me.courbiere.android.docky.item;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import me.courbiere.android.docky.util.ImageUtils;
 
 /**
  * TODO
  */
-public class AppInfo {
+public class AppInfo implements Parcelable {
     private static final String TAG = "AppInfo";
 
     /**
@@ -27,8 +34,11 @@ public class AppInfo {
 
     /**
      * When set to true, indicates that the icon has been resized.
+     * TODO: Find out if needed.
      */
     public boolean filtered;
+
+    public AppInfo() {}
 
     /**
      * Creates the application intent based on a component name and various launch flags.
@@ -69,4 +79,51 @@ public class AppInfo {
 
         return result;
     }
+
+    /* Parcelable related methods and fields */
+
+    public AppInfo(Parcel in) {
+        readFromParcel(in);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    /**
+     * Flatten this object in to a Parcel.
+     *
+     * @param dest  The Parcel in which the object should be written.
+     * @param flags Additional flags about how the object should be written.
+     *              May be 0 or {@link #PARCELABLE_WRITE_RETURN_VALUE}.
+     */
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(title.toString());
+        dest.writeParcelable(intent, 0);
+
+        // Convert icon to bitmap.
+        Bitmap bitmap = ((BitmapDrawable) icon).getBitmap();
+        dest.writeParcelable(bitmap, 0);
+    }
+
+    private void readFromParcel(Parcel in) {
+        title = in.readString();
+        intent = in.readParcelable(Intent.class.getClassLoader());
+        Bitmap bitmap = in.readParcelable(Bitmap.class.getClassLoader());
+        icon = new BitmapDrawable(Resources.getSystem(), bitmap);
+    }
+
+    public static final Creator CREATOR = new Creator() {
+        @Override
+        public Object createFromParcel(Parcel source) {
+            return new AppInfo(source);
+        }
+
+        @Override
+        public Object[] newArray(int size) {
+            return new AppInfo[size];
+        }
+    };
 }

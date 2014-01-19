@@ -4,37 +4,29 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 
 import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
-import me.courbiere.android.docky.item.AppInfo;
 import me.courbiere.android.docky.provider.DockItemsContract;
 import me.courbiere.android.docky.ui.view.DockLayout;
 
@@ -45,6 +37,13 @@ import static me.courbiere.android.docky.util.LogUtils.*;
  */
 public class DockService extends Service {
     private static final String TAG = "DockService";
+
+    public static final String[] DOCK_ITEM_PROJECTION = {
+            DockItemsContract.DockItems._ID,
+            DockItemsContract.DockItems.INTENT,
+            DockItemsContract.DockItems.TITLE,
+            DockItemsContract.DockItems.ICON,
+            DockItemsContract.DockItems.STICKY };
 
     /**
      * Dock Layout.
@@ -83,6 +82,11 @@ public class DockService extends Service {
     private static boolean sRunning = false;
 
     /**
+     * DockItem content observer.
+     */
+    private ContentObserver mDockItemObserver;
+
+    /**
      * Called by the system when the service is first created.  Do not call this method directly.
      */
     @Override
@@ -91,6 +95,10 @@ public class DockService extends Service {
 
         goToForeground();
         initListView();
+
+        mDockItemObserver = new DockItemObserver(new Handler());
+        getContentResolver().registerContentObserver(
+                DockItemsContract.DockItems.CONTENT_URI, true, mDockItemObserver);
 
         mDockLayout.attachToWindow();
     }
@@ -141,17 +149,11 @@ public class DockService extends Service {
         mDock = (LinearLayout) mDockLayout.findViewById(R.id.dock);
         mItemList = (ListView) mDockLayout.findViewById(R.id.dock_item_list);
 
-        final String[] projection = new String[] {
-                DockItemsContract.DockItems._ID,
-                DockItemsContract.DockItems.INTENT,
-                DockItemsContract.DockItems.TITLE,
-                DockItemsContract.DockItems.ICON,
-                DockItemsContract.DockItems.STICKY };
         final String[] from = new String[] {DockItemsContract.DockItems.ICON };
         final int[] to = new int[] { R.id.app_icon };
 
         mCursor = getContentResolver().query(DockItemsContract.DockItems.CONTENT_URI,
-                projection, null, null, DockItemsContract.DockItems.POSITION + " ASC");
+                DOCK_ITEM_PROJECTION, null, null, DockItemsContract.DockItems.POSITION + " ASC");
         mItemsAdapter = new SimpleCursorAdapter(getBaseContext(), R.layout.dock_item_layout,
                 mCursor, from, to, 0);
 
@@ -225,7 +227,6 @@ public class DockService extends Service {
      */
     @Override
     public void onDestroy() {
-        // TODO
         sRunning = false;
 
         if (mDockLayout != null) {
@@ -235,6 +236,26 @@ public class DockService extends Service {
 
         if (mCursor != null) {
             mCursor.close();
+        }
+
+        if (mDockItemObserver != null) {
+            getContentResolver().unregisterContentObserver(mDockItemObserver);
+        }
+    }
+
+    /**
+     * Listens for addition and deletion of dock items and updates the dock.
+     */
+    private class DockItemObserver extends ContentObserver {
+        public DockItemObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            mCursor = getContentResolver().query(DockItemsContract.DockItems.CONTENT_URI,
+                    DOCK_ITEM_PROJECTION, null, null, DockItemsContract.DockItems.POSITION + " ASC");
+            mItemsAdapter.changeCursor(mCursor);
         }
     }
 }

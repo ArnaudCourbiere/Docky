@@ -1,6 +1,7 @@
 package me.courbiere.android.docky.ui.activity;
 
 import android.app.ActivityManager;
+import android.content.AsyncQueryHandler;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -9,12 +10,20 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,14 +34,19 @@ import android.widget.GridView;
 import android.widget.ProgressBar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.item.AppInfo;
 import me.courbiere.android.docky.provider.DockItemsContract;
 import me.courbiere.android.docky.ui.adapter.GridItemArrayAdapter;
 import me.courbiere.android.docky.util.ImageUtils;
+
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * Allowing user to manage items that appear in the dock.
@@ -76,8 +90,27 @@ public class ManageItems extends FragmentActivity {
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+
+        /**
+         * Key used to save and retrieve app info list from state Bundles.
+         */
+        public static final String KEY_APP_INFO_LIST = "AppInfoList";
+
+        /**
+         * Key used to save and retrieve dock item list from state Bundles.
+         */
+        public static final String KEY_DOCK_ITEM_LIST = "DockItemList";
+
+        /**
+         * Identifies the Loader being used.
+         */
+        public static final int URL_LOADER = 0;
+
+        private Set<String> mDockItems;
         private ArrayList<AppInfo> mApplications;
+        private boolean mDockItemsLoaded;
+        private boolean mApplicationsLoaded;
         private ProgressBar mLoader;
         private GridView mAppGrid;
 
@@ -86,6 +119,10 @@ public class ManageItems extends FragmentActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
+            LOGD(TAG, "onCreateView()");
+            mDockItemsLoaded = false;
+            mApplicationsLoaded = false;
+
             View rootView = inflater.inflate(R.layout.fragment_item_grid, container, false);
             mLoader = (ProgressBar) rootView.findViewById(R.id.app_list_loader);
             mAppGrid = (GridView) rootView.findViewById(R.id.app_list);
@@ -93,25 +130,84 @@ public class ManageItems extends FragmentActivity {
 
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    AppInfo appInfo = mApplications.get(position);
+                    final AppInfo appInfo = mApplications.get(position);
+                    final String intentUri = appInfo.intent.toUri(0);
+                    final ContentResolver contentResolver = getActivity().getContentResolver();
+                    final AsyncQueryHandler asyncQueryHandler = new AsyncQueryHandler(contentResolver) {};
 
-                    final Bitmap bitmapIcon = ImageUtils.createIconBitmap(getActivity(), appInfo.icon);
-                    final byte[] flattenedIcon = ImageUtils.flattenBitmap(bitmapIcon);
+                    if (mAppGrid.isItemChecked(position)) {
+                        final Bitmap bitmapIcon = ImageUtils.createIconBitmap(getActivity(), appInfo.icon);
+                        final byte[] flattenedIcon = ImageUtils.flattenBitmap(bitmapIcon);
 
-                    ContentResolver contentResolver = getActivity().getContentResolver();
-                    ContentValues values = new ContentValues();
-                    values.put(DockItemsContract.DockItems.TITLE, appInfo.title.toString());
-                    values.put(DockItemsContract.DockItems.INTENT, appInfo.intent.toUri(0));
-                    values.put(DockItemsContract.DockItems.ICON, flattenedIcon);
-                    //values.put(DockItemsContract.DockItems.POSITION, position);
+                        final ContentValues values = new ContentValues();
+                        values.put(DockItemsContract.DockItems.TITLE, appInfo.title.toString());
+                        values.put(DockItemsContract.DockItems.INTENT, intentUri);
+                        values.put(DockItemsContract.DockItems.ICON, flattenedIcon);
+                        //values.put(DockItemsContract.DockItems.POSITION, position);
 
-                    contentResolver.insert(DockItemsContract.DockItems.CONTENT_URI, values);
+                        asyncQueryHandler.startInsert(
+                                0,
+                                null,
+                                DockItemsContract.DockItems.CONTENT_URI,
+                                values);
+                    } else {
+                        final String where = DockItemsContract.DockItems.INTENT + " = ?";
+                        final String[] selectionArgs = { intentUri };
+
+                        asyncQueryHandler.startDelete(
+                                0,
+                                null,
+                                DockItemsContract.DockItems.CONTENT_URI,
+                                where,
+                                selectionArgs);
+                    }
                 }
             });
 
-            new AppsLoader().execute();
+            // Load all apps.
+            if (savedInstanceState != null) {
+                mApplications = savedInstanceState.getParcelableArrayList(KEY_APP_INFO_LIST);
+
+                final String[] dockItems = savedInstanceState.getStringArray(KEY_DOCK_ITEM_LIST);
+                mDockItems = new HashSet<>(Arrays.asList(dockItems));
+
+                displayAppList();
+            } else {
+                new AppsLoader().execute();
+                getLoaderManager().initLoader(URL_LOADER, null, this);
+            }
 
             return rootView;
+        }
+
+        @Override
+        public void onSaveInstanceState(Bundle outState) {
+            super.onSaveInstanceState(outState);
+            outState.putParcelableArrayList(KEY_APP_INFO_LIST, mApplications);
+
+            final String[] dockItems = new String[mDockItems.size()];
+            outState.putStringArray(KEY_DOCK_ITEM_LIST, mDockItems.toArray(dockItems));
+        }
+
+        /**
+         * Removes the loading indicator and displays the applications in the GridView.
+         */
+        private void displayAppList() {
+            if (mLoader.getVisibility() != View.GONE) {
+                mAppGrid.setAdapter(new GridItemArrayAdapter(getActivity(), R.layout.grid_item_layout, mApplications));
+                int i = 0;
+
+                for (AppInfo appInfo : mApplications) {
+                    if (mDockItems.contains(appInfo.intent.toUri(0))) {
+                        mAppGrid.setItemChecked(i, true);
+                    }
+
+                    i++;
+                }
+
+                mLoader.setVisibility(View.GONE);
+                mAppGrid.setVisibility(View.VISIBLE);
+            }
         }
 
         /**
@@ -125,10 +221,8 @@ public class ManageItems extends FragmentActivity {
             }
 
             final PackageManager manager = getActivity().getPackageManager();
-
             final Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
             mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-
             final List<ResolveInfo> apps = manager.queryIntentActivities(mainIntent, 0);
             Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
 
@@ -177,6 +271,9 @@ public class ManageItems extends FragmentActivity {
             }
         }
 
+        /**
+         * Loads the application list in the background and displays them in the GridView when done.
+         */
         private class AppsLoader extends AsyncTask<Void, Void, Void> {
 
             @Override
@@ -188,10 +285,77 @@ public class ManageItems extends FragmentActivity {
 
             @Override
             protected void onPostExecute(Void aVoid) {
-                mLoader.setVisibility(View.GONE);
-                mAppGrid.setAdapter(new GridItemArrayAdapter(getActivity(), R.layout.grid_item_layout, mApplications));
-                mAppGrid.setVisibility(View.VISIBLE);
+                boolean displayAppList = false;
+
+                synchronized (this) {
+                    mApplicationsLoaded = true;
+
+                    if (mDockItemsLoaded) {
+                        displayAppList = true;
+                    }
+                }
+
+                if (displayAppList) {
+                    displayAppList();
+                }
             }
+        }
+
+        /* Loader callbacks */
+
+        @Override
+        public Loader<Cursor> onCreateLoader(int loaderId, Bundle bundle) {
+            final String[] projection = {
+                    DockItemsContract.DockItems._ID,
+                    DockItemsContract.DockItems.INTENT
+            };
+
+            switch (loaderId) {
+                case URL_LOADER:
+                    return new CursorLoader(
+                            getActivity(),
+                            DockItemsContract.DockItems.CONTENT_URI,
+                            projection,
+                            null, // Selection clause
+                            null, // Selection arguments
+                            null  // Default sort order
+                    );
+
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+            mDockItems = new HashSet<String>();
+            boolean displayAppList = false;
+
+            cursor.moveToFirst();
+
+            while (!cursor.isAfterLast()) {
+                mDockItems.add(cursor.getString(
+                        cursor.getColumnIndex(DockItemsContract.DockItems.INTENT)));
+
+                cursor.moveToNext();
+            }
+
+            synchronized (this) {
+                mDockItemsLoaded = true;
+
+                if (mApplicationsLoaded) {
+                    displayAppList = true;
+                }
+            }
+
+            if (displayAppList) {
+                displayAppList();
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> cursorLoader) {
+            mDockItems.clear();
         }
     }
 }
