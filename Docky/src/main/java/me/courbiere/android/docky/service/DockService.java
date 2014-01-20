@@ -186,7 +186,7 @@ public class DockService extends Service {
                         imageView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                            getBaseContext().startActivity(intent);
+                                getBaseContext().startActivity(intent);
                             }
                         });
                     } catch (URISyntaxException e) {

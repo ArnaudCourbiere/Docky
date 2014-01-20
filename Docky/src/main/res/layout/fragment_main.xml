@@ -14,4 +14,11 @@
         android:layout_height="wrap_content"
         android:text="@string/start"/>
 
+    <Button
+        android:id="@+id/manage_items"
+        android:layout_toRightOf="@id/toggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/manage_dock_items"/>
+
 </RelativeLayout>

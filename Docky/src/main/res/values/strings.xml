@@ -7,6 +7,11 @@
 
     <string name="start">Start</string>
     <string name="stop">Stop</string>
+    <string name="running">running</string>
+    <string name="stopped">stopped</string>
     <string name="manage_dock_items">Manage Dock Items</string>
+    <string name="manage_dock_items_subtitle_singular">%d item in dock</string>
+    <string name="manage_dock_items_subtitle_plural">%d items in dock</string>
+    <string name="dock_empty">dock empty</string>
 
 </resources>

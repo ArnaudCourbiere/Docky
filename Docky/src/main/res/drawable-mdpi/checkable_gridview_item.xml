@@ -4,12 +4,24 @@
     <item android:state_activated="true">
         <shape android:shape="rectangle">
             <solid android:color="#A4DBF0"/>
+            <stroke android:width="1dp"
+                android:color="#90C7DC"/>
+            <corners
+                android:bottomRightRadius="3dp"
+                android:bottomLeftRadius="3dp"
+                android:topLeftRadius="3dp"
+                android:topRightRadius="3dp"/>
         </shape>
     </item>
 
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
             <solid android:color="#A4DBF0"/>
+            <corners
+                android:bottomRightRadius="3dp"
+                android:bottomLeftRadius="3dp"
+                android:topLeftRadius="3dp"
+                android:topRightRadius="3dp"/>
         </shape>
     </item>
 

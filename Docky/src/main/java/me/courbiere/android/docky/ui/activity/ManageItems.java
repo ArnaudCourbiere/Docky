@@ -1,5 +1,8 @@
 package me.courbiere.android.docky.ui.activity;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.app.ActionBar;
 import android.app.ActivityManager;
 import android.content.AsyncQueryHandler;
 import android.content.ComponentName;
@@ -66,7 +69,7 @@ public class ManageItems extends FragmentActivity {
         }
     }
 
-
+    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -86,6 +89,7 @@ public class ManageItems extends FragmentActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+    */
 
     /**
      * A placeholder fragment containing a simple view.
@@ -113,15 +117,16 @@ public class ManageItems extends FragmentActivity {
         private boolean mApplicationsLoaded;
         private ProgressBar mLoader;
         private GridView mAppGrid;
+        private int mShortAnimDuration;
 
         public PlaceholderFragment() {}
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            LOGD(TAG, "onCreateView()");
             mDockItemsLoaded = false;
             mApplicationsLoaded = false;
+            mShortAnimDuration = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
             View rootView = inflater.inflate(R.layout.fragment_item_grid, container, false);
             mLoader = (ProgressBar) rootView.findViewById(R.id.app_list_loader);
@@ -193,6 +198,19 @@ public class ManageItems extends FragmentActivity {
          * Removes the loading indicator and displays the applications in the GridView.
          */
         private void displayAppList() {
+            final ActionBar actionBar = getActivity().getActionBar();
+            final int numItems = mDockItems.size() - 1;
+
+            if (numItems == 0) {
+                actionBar.setSubtitle(R.string.dock_empty);
+            } else {
+                final int stringId = numItems == 1
+                        ? R.string.manage_dock_items_subtitle_singular
+                        : R.string.manage_dock_items_subtitle_plural;
+
+                actionBar.setSubtitle(String.format(getString(stringId), numItems));
+            }
+
             if (mLoader.getVisibility() != View.GONE) {
                 mAppGrid.setAdapter(new GridItemArrayAdapter(getActivity(), R.layout.grid_item_layout, mApplications));
                 int i = 0;
@@ -205,8 +223,22 @@ public class ManageItems extends FragmentActivity {
                     i++;
                 }
 
-                mLoader.setVisibility(View.GONE);
+                mAppGrid.setAlpha(0f);
                 mAppGrid.setVisibility(View.VISIBLE);
+                mAppGrid.animate()
+                        .alpha(1f)
+                        .setDuration(mShortAnimDuration)
+                        .setListener(null);
+
+                mLoader.animate()
+                        .alpha(0f)
+                        .setDuration(mShortAnimDuration)
+                        .setListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                mLoader.setVisibility(View.GONE);
+                            }
+                        });
             }
         }
 
