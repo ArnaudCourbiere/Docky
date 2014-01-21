@@ -32,7 +32,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.GridLayoutAnimationController;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ProgressBar;
 
@@ -127,9 +131,10 @@ public class ManageItems extends FragmentActivity {
             mDockItemsLoaded = false;
             mApplicationsLoaded = false;
             mShortAnimDuration = getResources().getInteger(android.R.integer.config_shortAnimTime);
+            mApplications = new ArrayList<>();
 
             View rootView = inflater.inflate(R.layout.fragment_item_grid, container, false);
-            mLoader = (ProgressBar) rootView.findViewById(R.id.app_list_loader);
+            // mLoader = (ProgressBar) rootView.findViewById(R.id.app_list_loader);
             mAppGrid = (GridView) rootView.findViewById(R.id.app_list);
             mAppGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -169,6 +174,12 @@ public class ManageItems extends FragmentActivity {
                 }
             });
 
+            mAppGrid.setAdapter(new GridItemArrayAdapter(getActivity(), R.layout.grid_item_layout, mApplications));
+
+            Animation animation = AnimationUtils.loadAnimation(getActivity(), R.anim.left_slide_out);
+            GridLayoutAnimationController controller = new GridLayoutAnimationController(animation);
+            mAppGrid.setLayoutAnimation(controller);
+
             // Load all apps.
             if (savedInstanceState != null) {
                 mApplications = savedInstanceState.getParcelableArrayList(KEY_APP_INFO_LIST);
@@ -177,6 +188,7 @@ public class ManageItems extends FragmentActivity {
                 mDockItems = new HashSet<>(Arrays.asList(dockItems));
 
                 displayAppList();
+                ((ArrayAdapter) mAppGrid.getAdapter()).notifyDataSetChanged();
             } else {
                 new AppsLoader().execute();
                 getLoaderManager().initLoader(URL_LOADER, null, this);
@@ -211,8 +223,9 @@ public class ManageItems extends FragmentActivity {
                 actionBar.setSubtitle(String.format(getString(stringId), numItems));
             }
 
-            if (mLoader.getVisibility() != View.GONE) {
-                mAppGrid.setAdapter(new GridItemArrayAdapter(getActivity(), R.layout.grid_item_layout, mApplications));
+            // if (mLoader.getVisibility() != View.GONE) {
+            if (mApplications.size() == 0) {
+                //mAppGrid.setAdapter(new GridItemArrayAdapter(getActivity(), R.layout.grid_item_layout, mApplications));
                 int i = 0;
 
                 for (AppInfo appInfo : mApplications) {
@@ -223,13 +236,16 @@ public class ManageItems extends FragmentActivity {
                     i++;
                 }
 
+                /*
                 mAppGrid.setAlpha(0f);
                 mAppGrid.setVisibility(View.VISIBLE);
                 mAppGrid.animate()
                         .alpha(1f)
                         .setDuration(mShortAnimDuration)
                         .setListener(null);
+                */
 
+                /*
                 mLoader.animate()
                         .alpha(0f)
                         .setDuration(mShortAnimDuration)
@@ -239,6 +255,7 @@ public class ManageItems extends FragmentActivity {
                                 mLoader.setVisibility(View.GONE);
                             }
                         });
+                */
             }
         }
 
@@ -299,6 +316,13 @@ public class ManageItems extends FragmentActivity {
                     }
 
                     mApplications.add(application);
+
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ((ArrayAdapter) mAppGrid.getAdapter()).notifyDataSetChanged();
+                        }
+                    });
                 }
             }
         }
@@ -310,7 +334,7 @@ public class ManageItems extends FragmentActivity {
 
             @Override
             protected Void doInBackground(Void... params) {
-                loadApplications(true);
+                loadApplications(false);
 
                 return null;
             }
