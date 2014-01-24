@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.courbiere.android.docky"
-    android:versionCode="3"
-    android:versionName="0.0.3" >
+    android:versionCode="4"
+    android:versionName="0.0.4" >
 
     <uses-sdk
         android:minSdkVersion="15"
@@ -30,7 +30,13 @@
 
         <activity
             android:name=".ui.activity.ManageItems"
-            android:label="@string/manage_dock_items"/>
+            android:label="@string/manage_dock_items"
+            android:parentActivityName=".MainActivity">
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="me.courbiere.android.docky.MainActivity"/>
+        </activity>
 
         <service
             android:name=".service.DockService"

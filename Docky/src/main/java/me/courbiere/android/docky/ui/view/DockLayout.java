@@ -249,7 +249,7 @@ public class DockLayout extends RelativeLayout {
             case MotionEvent.ACTION_UP:
                 final int dragState = mDragger.getViewDragState();
 
-                if (dragState == STATE_IDLE && (mDock.getLeft() == getWidth())) {
+                if (dragState == STATE_IDLE && (mDock.getLeft() >= getWidth())) {
                     foldContainer();
                 }
 

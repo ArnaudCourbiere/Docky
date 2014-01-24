@@ -2,4 +2,6 @@
 <resources>
     <color name="dock_background">#DD000000</color>
     <color name="dock_separator">#E8444444</color>
+    <color name="ab_background">#ff6e2670</color>
+    <color name="ab_border">#ff552057</color>
 </resources>

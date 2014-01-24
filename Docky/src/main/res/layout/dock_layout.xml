@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-
 <me.courbiere.android.docky.ui.view.DockLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/dock_layout"
@@ -13,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="25dp"
         android:layout_alignParentRight="true"
-        android:background="@drawable/dock_background_white_rounded">
+        style="@style/Dock.White">
 
         <ListView
             android:id="@+id/dock_item_list"
