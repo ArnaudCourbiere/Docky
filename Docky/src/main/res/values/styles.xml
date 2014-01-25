@@ -4,11 +4,24 @@
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
         <!-- Customize your theme here. -->
         <item name="android:actionBarStyle">@style/CustActionBar</item>
+        <item name="android:windowContentOverlay">@null</item>
     </style>
 
     <!-- ActionBar styles -->
     <style name="CustActionBar" parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
         <item name="android:background">@drawable/ab_background</item>
+        <item name="android:titleTextStyle">@style/CustActionBarTitleText</item>
+        <item name="android:subtitleTextStyle">@style/CustActionBarSubtitleText</item>
+    </style>
+
+    <!-- ActionBar title text -->
+    <style name="CustActionBarTitleText" parent="android:TextAppearance.Holo.Widget.ActionBar.Title.Inverse">
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <!-- ActionBar subtitle text -->
+    <style name="CustActionBarSubtitleText" parent="android:TextAppearance.Holo.Widget.ActionBar.Subtitle.Inverse">
+        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <!-- Dock styles -->
