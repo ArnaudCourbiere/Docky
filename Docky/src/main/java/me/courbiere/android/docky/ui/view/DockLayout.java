@@ -6,7 +6,6 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
 import android.os.Build;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ViewDragHelper;
@@ -15,11 +14,11 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 
 import me.courbiere.android.docky.R;
+import me.courbiere.android.docky.ui.activity.SettingsActivity;
 
 import static me.courbiere.android.docky.util.LogUtils.LOGD;
 
@@ -31,13 +30,6 @@ import static me.courbiere.android.docky.util.LogUtils.LOGD;
  */
 public class DockLayout extends RelativeLayout {
     private static final String TAG = "DockLayout";
-
-    /* Constants used to retrieve user preferences */
-    public static final String PREFERENCES_STYLE = "preferences_style";
-
-    /* Dock style constants (used to store style in preferences) */
-    public static final String STYLE_WHITE = "STYLE_WHITE";
-    public static final String STYLE_BLACK = "STYLE_BLACK";
 
     /**
      * Indicates that the dock is in an idle, settled state. No animation is in progress.
@@ -181,12 +173,12 @@ public class DockLayout extends RelativeLayout {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         int drawableId;
 
-        switch (prefs.getString(PREFERENCES_STYLE, STYLE_WHITE)) {
-            case STYLE_BLACK:
+        switch (prefs.getString(SettingsActivity.PREFERENCES_STYLE, SettingsActivity.STYLE_WHITE)) {
+            case SettingsActivity.STYLE_BLACK:
                 drawableId = R.drawable.dock_background_black_rounded;
                 break;
 
-            case STYLE_WHITE:
+            case SettingsActivity.STYLE_WHITE:
             default:
                 drawableId = R.drawable.dock_background_white_rounded;
         }

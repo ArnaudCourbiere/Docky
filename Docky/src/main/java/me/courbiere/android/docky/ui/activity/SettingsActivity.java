@@ -15,6 +15,14 @@ import me.courbiere.android.docky.ui.fragment.SettingsFragment;
 public class SettingsActivity extends Activity {
     private static final String TAG = "SettingsActivity";
 
+    /* Constants used to retrieve user preferences */
+    public static final String PREFERENCES_STYLE = "preferences_style";
+    public static final String PREFERENCES_START_DOCK_ON_BOOT = "preferences_start_dock_on_boot";
+
+    /* Dock style constants (used to store style in preferences) */
+    public static final String STYLE_WHITE = "STYLE_WHITE";
+    public static final String STYLE_BLACK = "STYLE_BLACK";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

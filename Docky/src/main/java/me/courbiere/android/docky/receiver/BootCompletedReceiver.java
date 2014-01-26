@@ -4,6 +4,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+
+import me.courbiere.android.docky.service.DockService;
+import me.courbiere.android.docky.ui.activity.SettingsActivity;
 
 /**
  * Receives the BOOT_COMPLETED broadcast and starts Dock depending on user preferences.
@@ -26,7 +31,11 @@ public class BootCompletedReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
-            //context.startService(new Intent(context, DockService.class));
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+            if (prefs.getBoolean(SettingsActivity.PREFERENCES_START_DOCK_ON_BOOT, false)) {
+                context.startService(new Intent(context, DockService.class));
+            }
         }
     }
 }

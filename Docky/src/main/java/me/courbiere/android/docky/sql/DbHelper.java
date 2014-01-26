@@ -25,7 +25,7 @@ public class DbHelper extends SQLiteOpenHelper {
     /**
      * Database version.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     /**
      * Database name.
@@ -89,7 +89,33 @@ public class DbHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // TODO
+
+        // Update the dock item launching the ManageItemsActivity (class renamed).
+        if (oldVersion < 2 && newVersion >= 2) {
+            final String whereClause = DockItemsContract.DockItems.TITLE + " = ?";
+            final String[] whereArgs = { "Add" };
+
+            db.delete(DockItemsContract.DockItems.TABLE_NAME, whereClause, whereArgs);
+
+            // Add item that allows to add more apps with updated Class name.
+            final String addTitle = "Add";
+            final Intent addIntent = new Intent(mContext, ManageItemsActivity.class);
+            addIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            final ActivityManager activityManager = (ActivityManager)
+                    mContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final int iconDpi = activityManager.getLauncherLargeIconDensity();
+            final Drawable addIcon = mContext.getResources().getDrawableForDensity(R.drawable.dock_action_new, iconDpi);
+            final Bitmap addBitmap = ImageUtils.createIconBitmap(mContext, addIcon);
+            final byte[] flattenedAddIcon = ImageUtils.flattenBitmap(addBitmap);
+            final int position = 10000;
+            final ContentValues addValues = new ContentValues();
+            addValues.put(DockItemsContract.DockItems.TITLE, addTitle);
+            addValues.put(DockItemsContract.DockItems.INTENT, addIntent.toUri(0));
+            addValues.put(DockItemsContract.DockItems.ICON, flattenedAddIcon);
+            addValues.put(DockItemsContract.DockItems.POSITION, position);
+            addValues.put(DockItemsContract.DockItems.STICKY, true);
+            db.insert(DockItemsContract.DockItems.TABLE_NAME, null, addValues);
+        }
     }
 
     /**

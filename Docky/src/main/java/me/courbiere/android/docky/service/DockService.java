@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -13,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.view.LayoutInflater;
@@ -31,6 +33,7 @@ import java.util.HashMap;
 import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.provider.DockItemsContract;
+import me.courbiere.android.docky.ui.activity.SettingsActivity;
 import me.courbiere.android.docky.ui.view.DockLayout;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
@@ -95,6 +98,8 @@ public class DockService extends Service {
     @Override
     public void onCreate() {
         sRunning = true;
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.edit().putBoolean(SettingsActivity.PREFERENCES_START_DOCK_ON_BOOT, true).commit();
 
         goToForeground();
         initListView();
@@ -233,7 +238,10 @@ public class DockService extends Service {
      */
     @Override
     public void onDestroy() {
+        LOGD(TAG, "onDestroy():START");
         sRunning = false;
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.edit().putBoolean(SettingsActivity.PREFERENCES_START_DOCK_ON_BOOT, false).commit();
 
         if (mDockLayout != null) {
             ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(mDockLayout);
@@ -247,6 +255,7 @@ public class DockService extends Service {
         if (mDockItemObserver != null) {
             getContentResolver().unregisterContentObserver(mDockItemObserver);
         }
+        LOGD(TAG, "onDestroy():END");
     }
 
     /**
