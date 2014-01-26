@@ -10,8 +10,7 @@
         android:layout_width="@dimen/dock_width"
         android:layout_height="wrap_content"
         android:layout_marginTop="25dp"
-        android:layout_alignParentRight="true"
-        style="@style/Dock.White">
+        android:layout_alignParentRight="true">
 
         <ListView
             android:id="@+id/dock_item_list"

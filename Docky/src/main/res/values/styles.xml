@@ -4,7 +4,7 @@
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
         <!-- Customize your theme here. -->
         <item name="android:actionBarStyle">@style/CustActionBar</item>
-        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:popupMenuStyle">@style/CustPopupMenu</item>
     </style>
 
     <!-- ActionBar styles -->
@@ -22,6 +22,11 @@
     <!-- ActionBar subtitle text -->
     <style name="CustActionBarSubtitleText" parent="android:TextAppearance.Holo.Widget.ActionBar.Subtitle.Inverse">
         <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <!-- Popup Menu -->
+    <style name="CustPopupMenu" parent="android:Widget.Holo.Light.ListPopupWindow">
+        <item name="android:popupBackground">@drawable/ab_background</item>
     </style>
 
     <!-- Dock styles -->

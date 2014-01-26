@@ -1,28 +1,17 @@
 package me.courbiere.android.docky.sql;
 
 import android.app.ActivityManager;
-import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.provider.DockItemsContract;
-import me.courbiere.android.docky.ui.activity.ManageItems;
-import me.courbiere.android.docky.ui.view.DockLayout;
+import me.courbiere.android.docky.ui.activity.ManageItemsActivity;
 import me.courbiere.android.docky.util.ImageUtils;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
@@ -118,7 +107,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         // Add item that allows to add more apps.
         final String addTitle = "Add";
-        final Intent addIntent = new Intent(mContext, ManageItems.class);
+        final Intent addIntent = new Intent(mContext, ManageItemsActivity.class);
         addIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         final ActivityManager activityManager = (ActivityManager)
                 mContext.getSystemService(Context.ACTIVITY_SERVICE);

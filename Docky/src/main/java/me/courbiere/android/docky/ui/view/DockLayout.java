@@ -1,10 +1,13 @@
 package me.courbiere.android.docky.ui.view;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
@@ -28,6 +31,13 @@ import static me.courbiere.android.docky.util.LogUtils.LOGD;
  */
 public class DockLayout extends RelativeLayout {
     private static final String TAG = "DockLayout";
+
+    /* Constants used to retrieve user preferences */
+    public static final String PREFERENCES_STYLE = "preferences_style";
+
+    /* Dock style constants (used to store style in preferences) */
+    public static final String STYLE_WHITE = "STYLE_WHITE";
+    public static final String STYLE_BLACK = "STYLE_BLACK";
 
     /**
      * Indicates that the dock is in an idle, settled state. No animation is in progress.
@@ -168,6 +178,24 @@ public class DockLayout extends RelativeLayout {
      */
     public void attachToWindow() {
         mDock = findViewById(R.id.dock);
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        int drawableId;
+
+        switch (prefs.getString(PREFERENCES_STYLE, STYLE_WHITE)) {
+            case STYLE_BLACK:
+                drawableId = R.drawable.dock_background_black_rounded;
+                break;
+
+            case STYLE_WHITE:
+            default:
+                drawableId = R.drawable.dock_background_white_rounded;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mDock.setBackground(getResources().getDrawable(drawableId));
+        } else {
+            mDock.setBackgroundDrawable(getResources().getDrawable(drawableId));
+        }
 
         final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
                 mDockLayoutWidth,
@@ -249,7 +277,8 @@ public class DockLayout extends RelativeLayout {
             case MotionEvent.ACTION_UP:
                 final int dragState = mDragger.getViewDragState();
 
-                if (dragState == STATE_IDLE && (mDock.getLeft() >= getWidth())) {
+                if ((dragState == STATE_IDLE || dragState == STATE_SETTLING)
+                        && (mDock.getLeft() >= getWidth())) {
                     foldContainer();
                 }
 
@@ -399,7 +428,7 @@ public class DockLayout extends RelativeLayout {
             switch (state) {
                 case STATE_IDLE:
                     // If drawer is closed, fold container.
-                    if (mDock.getLeft() == getWidth()) {
+                    if (mDock.getLeft() >= getWidth()) {
                         foldContainer();
                         /*
                     } else {

@@ -3,6 +3,7 @@ package me.courbiere.android.docky;
 import android.app.ActionBar;
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
@@ -13,7 +14,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import me.courbiere.android.docky.service.DockService;
-import me.courbiere.android.docky.ui.activity.ManageItems;
+import me.courbiere.android.docky.ui.activity.ManageItemsActivity;
+import me.courbiere.android.docky.ui.activity.SettingsActivity;
 
 public class MainActivity extends FragmentActivity {
     private static final String TAG = "MainActivity";
@@ -22,6 +24,7 @@ public class MainActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
@@ -30,7 +33,6 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         
@@ -46,11 +48,12 @@ public class MainActivity extends FragmentActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         switch (item.getItemId()) {
             case R.id.action_settings:
+                final Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
-    */
 
     /**
      * A placeholder fragment containing a simple view.
@@ -95,10 +98,11 @@ public class MainActivity extends FragmentActivity {
             manageItemsButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    final Intent intent = new Intent(getActivity(), ManageItems.class);
+                    final Intent intent = new Intent(getActivity(), ManageItemsActivity.class);
                     startActivity(intent);
                 }
             });
+
             return rootView;
         }
     }

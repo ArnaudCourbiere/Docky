@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="dock_styles_values">
+        <item>@string/const_style_white</item>
+        <item>@string/const_style_black</item>
+    </string-array>
+    <string-array name="dock_styles_entries">
+        <item>@string/white</item>
+        <item>@string/black</item>
+    </string-array>
+</resources>

@@ -14,13 +14,16 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -114,32 +117,28 @@ public class DockService extends Service {
 
     private void goToForeground() {
         final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(getString(R.string.app_name))
-                .setContentText("Aloha!");
+                .setContentText(getString(R.string.notification_subtitle));
 
-        final Notification notification = notificationBuilder.getNotification();
+        final Intent notificationIntent = new Intent(this, MainActivity.class);
+        final TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(notificationIntent);
+
+        final PendingIntent notificationPendingIntent = stackBuilder.getPendingIntent(
+                0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        notificationBuilder.setContentIntent(notificationPendingIntent);
+
+        final Notification notification = notificationBuilder.build();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             notification.priority |= Notification.PRIORITY_MIN;
         }
 
-        final Intent notificationIntent = new Intent(this, MainActivity.class);
-        final PendingIntent notificationPendingIntent = PendingIntent.getActivity(
-                this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        notificationBuilder.setContentIntent(notificationPendingIntent);
-
         startForeground(1337, notification);
-        /*
-        Notification notification = new Notification(R.drawable.ic_launcher, getText(R.string.app_name),
-                System.currentTimeMillis());
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        notification.setLatestEventInfo(this, getText(R.string.app_name),
-                "Aloha!", pendingIntent);
-        startForeground(1337, notification);
-        */
     }
 
     private void initListView() {
@@ -148,6 +147,13 @@ public class DockService extends Service {
         mDockLayout = (DockLayout) inflater.inflate(R.layout.dock_layout, null);
         mDock = (LinearLayout) mDockLayout.findViewById(R.id.dock);
         mItemList = (ListView) mDockLayout.findViewById(R.id.dock_item_list);
+        mItemList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(getBaseContext(), "Long click", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
 
         final String[] from = new String[] {DockItemsContract.DockItems.ICON };
         final int[] to = new int[] { R.id.app_icon };

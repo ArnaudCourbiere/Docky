@@ -30,8 +30,18 @@
         </activity>
 
         <activity
-            android:name=".ui.activity.ManageItems"
+            android:name=".ui.activity.ManageItemsActivity"
             android:label="@string/manage_dock_items"
+            android:parentActivityName=".MainActivity">
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="me.courbiere.android.docky.MainActivity"/>
+        </activity>
+
+        <activity
+            android:name=".ui.activity.SettingsActivity"
+            android:label="@string/action_settings"
             android:parentActivityName=".MainActivity">
 
             <meta-data
