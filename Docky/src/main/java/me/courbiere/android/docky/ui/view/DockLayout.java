@@ -110,6 +110,11 @@ public class DockLayout extends RelativeLayout {
     private final ViewDragCallback mDragCallback;
 
     /**
+     * Listener for shared preferences changes.
+     */
+    private final PreferenceChangeListener mPreferenceChangeListener;
+
+    /**
      * Dock current lock mode.
      */
     private int mLockMode = LOCK_MODE_UNLOCKED;
@@ -130,6 +135,7 @@ public class DockLayout extends RelativeLayout {
 
         mDockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
         mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        mPreferenceChangeListener = new PreferenceChangeListener();
         mDragCallback = new ViewDragCallback();
         mDragger = ViewDragHelper.create(this, TOUCH_SLOP_SENSITIVITY, mDragCallback);
         mDragger.setEdgeTrackingEnabled(ViewDragHelper.EDGE_RIGHT | ViewDragHelper.EDGE_LEFT);
@@ -170,24 +176,7 @@ public class DockLayout extends RelativeLayout {
      */
     public void attachToWindow() {
         mDock = findViewById(R.id.dock);
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        int drawableId;
-
-        switch (prefs.getString(SettingsActivity.PREFERENCES_STYLE, SettingsActivity.STYLE_WHITE)) {
-            case SettingsActivity.STYLE_BLACK:
-                drawableId = R.drawable.dock_background_black_rounded;
-                break;
-
-            case SettingsActivity.STYLE_WHITE:
-            default:
-                drawableId = R.drawable.dock_background_white_rounded;
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            mDock.setBackground(getResources().getDrawable(drawableId));
-        } else {
-            mDock.setBackgroundDrawable(getResources().getDrawable(drawableId));
-        }
+        setDockBackground(PreferenceManager.getDefaultSharedPreferences(getContext()));
 
         final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
                 mDockLayoutWidth,
@@ -203,6 +192,43 @@ public class DockLayout extends RelativeLayout {
         layoutParams.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
         layoutParams.setTitle(getContext().getString(R.string.app_name));
         mWindowManager.addView(this, layoutParams);
+    }
+
+    /**
+     * Helper function to set the dock background from preferences.
+     */
+    private void setDockBackground(SharedPreferences sharedPreferences) {
+        int drawableId;
+
+        switch (sharedPreferences.getString(SettingsActivity.PREFERENCES_STYLE, SettingsActivity.STYLE_WHITE)) {
+            case SettingsActivity.STYLE_BLACK:
+                drawableId = R.drawable.dock_background_black_rounded;
+                break;
+
+            case SettingsActivity.STYLE_WHITE:
+            default:
+                drawableId = R.drawable.dock_background_white_rounded;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mDock.setBackground(getResources().getDrawable(drawableId));
+        } else {
+            mDock.setBackgroundDrawable(getResources().getDrawable(drawableId));
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        PreferenceManager.getDefaultSharedPreferences(getContext())
+                .registerOnSharedPreferenceChangeListener(mPreferenceChangeListener);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        PreferenceManager.getDefaultSharedPreferences(getContext())
+                .unregisterOnSharedPreferenceChangeListener(mPreferenceChangeListener);
     }
 
     /*
@@ -482,6 +508,29 @@ public class DockLayout extends RelativeLayout {
             }
 
             invalidate();
+        }
+    }
+
+    /**
+     * Listener used to update the dock on preference changes.
+     */
+    private class PreferenceChangeListener implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+        /**
+         * Called when a shared preference is changed, added, or removed. This
+         * may be called even if a preference is set to its existing value.
+         * <p/>
+         * <p>This callback will be run on your main thread.
+         *
+         * @param sharedPreferences The {@link android.content.SharedPreferences} that received
+         *                          the change.
+         * @param key               The key of the preference that was changed, added, or
+         */
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if (mDock != null && key.equals(SettingsActivity.PREFERENCES_STYLE)) {
+                setDockBackground(sharedPreferences);
+            }
         }
     }
 }

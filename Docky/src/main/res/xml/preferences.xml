@@ -5,6 +5,7 @@
         android:key="preferences_style"
         android:title="@string/preferences_style"
         android:dialogTitle="@string/preferences_style"
+        android:summary="@string/white"
         android:entries="@array/dock_styles_entries"
         android:entryValues="@array/dock_styles_values"
         android:defaultValue="@string/const_style_white"/>

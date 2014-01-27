@@ -238,7 +238,6 @@ public class DockService extends Service {
      */
     @Override
     public void onDestroy() {
-        LOGD(TAG, "onDestroy():START");
         sRunning = false;
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.edit().putBoolean(SettingsActivity.PREFERENCES_START_DOCK_ON_BOOT, false).commit();
@@ -255,7 +254,6 @@ public class DockService extends Service {
         if (mDockItemObserver != null) {
             getContentResolver().unregisterContentObserver(mDockItemObserver);
         }
-        LOGD(TAG, "onDestroy():END");
     }
 
     /**
