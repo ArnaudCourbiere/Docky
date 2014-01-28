@@ -17,6 +17,7 @@
         android:layout_weight="1"
         android:textSize="@dimen/main_button_text_size"
         android:text="@string/start"
+        android:textColor="@color/custom_button_text"
         android:background="@drawable/custom_button"/>
 
     <Button
@@ -26,6 +27,7 @@
         android:layout_weight="1"
         android:textSize="@dimen/main_button_text_size"
         android:text="@string/manage_dock_items"
+        android:textColor="@color/custom_button_text"
         android:background="@drawable/custom_button"/>
 
     <Button
@@ -35,6 +37,7 @@
         android:layout_weight="1"
         android:textSize="@dimen/main_button_text_size"
         android:text="@string/action_settings"
+        android:textColor="@color/custom_button_text"
         android:background="@drawable/custom_button"/>
 
 </LinearLayout>
