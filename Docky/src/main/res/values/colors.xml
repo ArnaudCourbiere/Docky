@@ -2,5 +2,11 @@
 <resources>
     <color name="ab_background">#ffffb400</color>
     <color name="ab_border">#ffdc7d00</color>
-    <color name="window_background">#ff87dc55</color>
+
+    <color name="custom_button_background">#ffffdf8e</color>
+    <color name="custom_button_border">#ffdc7d00</color>
+    <color name="custom_button_background_focused">#ffffb400</color>
+    <color name="custom_button_border_focused">#ffdc7d00</color>
+    <color name="custom_button_background_pressed">#ffffb400</color>
+    <color name="custom_button_border_pressed">#ffdc7d00</color>
 </resources>

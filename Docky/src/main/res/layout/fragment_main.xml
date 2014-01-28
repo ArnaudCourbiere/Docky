@@ -16,7 +16,8 @@
         android:layout_height="@dimen/main_button_height"
         android:layout_weight="1"
         android:textSize="@dimen/main_button_text_size"
-        android:text="@string/start"/>
+        android:text="@string/start"
+        android:background="@drawable/custom_button"/>
 
     <Button
         android:id="@+id/manage_items"
@@ -24,7 +25,8 @@
         android:layout_height="@dimen/main_button_height"
         android:layout_weight="1"
         android:textSize="@dimen/main_button_text_size"
-        android:text="@string/manage_dock_items"/>
+        android:text="@string/manage_dock_items"
+        android:background="@drawable/custom_button"/>
 
     <Button
         android:id="@+id/settings"
@@ -32,6 +34,7 @@
         android:layout_height="@dimen/main_button_height"
         android:layout_weight="1"
         android:textSize="@dimen/main_button_text_size"
-        android:text="@string/action_settings"/>
+        android:text="@string/action_settings"
+        android:background="@drawable/custom_button"/>
 
 </LinearLayout>
