@@ -24,11 +24,6 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <!-- Popup Menu -->
-    <style name="CustPopupMenu" parent="android:Widget.Holo.PopupMenu">
-        <item name="android:popupBackground">#ffffff</item>
-    </style>
-
     <!-- This style is used to style the Light.DarkActionBar theme -->
     <style name="Theme.Custom.Widget" parent="@android:Widget.Holo.PopupMenu">
     </style>

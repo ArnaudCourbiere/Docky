@@ -72,6 +72,7 @@ public class ManageItemsActivity extends FragmentActivity {
         }
     }
 
+    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -106,6 +107,7 @@ public class ManageItemsActivity extends FragmentActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+    */
 
     /**
      * A placeholder fragment containing a simple view.

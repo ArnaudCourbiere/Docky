@@ -33,6 +33,7 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         
@@ -54,6 +55,7 @@ public class MainActivity extends FragmentActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+    */
 
     /**
      * A placeholder fragment containing a simple view.
@@ -70,6 +72,7 @@ public class MainActivity extends FragmentActivity {
 
             final Button toggleButon = (Button) rootView.findViewById(R.id.toggle);
             final Button manageItemsButton = (Button) rootView.findViewById(R.id.manage_items);
+            final Button settingsButton = (Button) rootView.findViewById(R.id.settings);
             final ActionBar actionBar = getActivity().getActionBar();
 
             if (DockService.isRunning()) {
@@ -99,6 +102,14 @@ public class MainActivity extends FragmentActivity {
                 @Override
                 public void onClick(View v) {
                     final Intent intent = new Intent(getActivity(), ManageItemsActivity.class);
+                    startActivity(intent);
+                }
+            });
+
+            settingsButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    final Intent intent = new Intent(getActivity(), SettingsActivity.class);
                     startActivity(intent);
                 }
             });
