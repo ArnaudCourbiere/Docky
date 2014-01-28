@@ -1,5 +1,6 @@
 package me.courbiere.android.docky.service;
 
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -14,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -181,6 +183,8 @@ public class DockService extends Service {
                     final ImageView imageView = (ImageView) view;
                     final String intentUri = cursor.getString(
                             cursor.getColumnIndex(DockItemsContract.DockItems.INTENT));
+                    final String appName = cursor.getString(
+                            cursor.getColumnIndex(DockItemsContract.DockItems.TITLE));
 
                     try {
                         final Intent intent = Intent.parseUri(intentUri, 0);
@@ -198,6 +202,22 @@ public class DockService extends Service {
                             @Override
                             public void onClick(View v) {
                                 getBaseContext().startActivity(intent);
+
+                                // Display a message if the app is not launching right away.
+                                final Handler handler = new Handler(Looper.getMainLooper());
+                                final Runnable runnable = new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+                                        ActivityManager.RunningTaskInfo runningTaskInfo = activityManager.getRunningTasks(1).get(0);
+
+                                        if (!runningTaskInfo.baseActivity.equals(component)) {
+                                            Toast.makeText(DockService.this, "Launching " + appName, Toast.LENGTH_LONG).show();
+                                        }
+                                    }
+                                };
+                                handler.post(runnable);
+
                             }
                         });
                     } catch (URISyntaxException e) {
