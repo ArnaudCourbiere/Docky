@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ab_background">#ffffb400</color>
-    <color name="ab_border">#ffdc7d00</color>
-
     <color name="custom_button_background">#ffefcf7f</color>
     <color name="custom_button_border">#ffe68700</color>
     <color name="custom_button_background_focused">#ffebc769</color>
