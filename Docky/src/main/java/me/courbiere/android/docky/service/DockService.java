@@ -11,7 +11,6 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -32,9 +31,9 @@ import android.widget.Toast;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 
-import me.courbiere.android.docky.MainActivity;
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.provider.DockItemsContract;
+import me.courbiere.android.docky.ui.activity.ManageItemsActivity;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
 import me.courbiere.android.docky.ui.view.DockLayout;
 
@@ -77,11 +76,6 @@ public class DockService extends Service {
      * Cursor used with the SimpleCursorAdapter.
      */
     private Cursor mCursor;
-
-    /**
-     * Icon cache.
-     */
-    private HashMap<ComponentName, Bitmap> mCache = new HashMap<>(50);
 
     /**
      * Instance variable to check if the service is running.
@@ -128,10 +122,10 @@ public class DockService extends Service {
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(getString(R.string.notification_subtitle));
 
-        final Intent notificationIntent = new Intent(this, MainActivity.class);
+        final Intent notificationIntent = new Intent(this, ManageItemsActivity.class);
         final TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 
-        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addParentStack(ManageItemsActivity.class);
         stackBuilder.addNextIntent(notificationIntent);
 
         final PendingIntent notificationPendingIntent = stackBuilder.getPendingIntent(
@@ -173,63 +167,7 @@ public class DockService extends Service {
         // TODO: Improvement: use the holder pattern.
 
         // Use custom binder.
-        final SimpleCursorAdapter.ViewBinder binder = new SimpleCursorAdapter.ViewBinder() {
-
-            @Override
-            public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-                final String columnName = cursor.getColumnName(columnIndex);
-
-                if (columnName.equals(DockItemsContract.DockItems.ICON)) {
-                    final ImageView imageView = (ImageView) view;
-                    final String intentUri = cursor.getString(
-                            cursor.getColumnIndex(DockItemsContract.DockItems.INTENT));
-                    final String appName = cursor.getString(
-                            cursor.getColumnIndex(DockItemsContract.DockItems.TITLE));
-
-                    try {
-                        final Intent intent = Intent.parseUri(intentUri, 0);
-                        final ComponentName component = intent.getComponent();
-                        Bitmap iconBitmap = mCache.get(component);
-
-                        if (iconBitmap == null) {
-                            final byte[] icon = cursor.getBlob(columnIndex);
-                            iconBitmap = BitmapFactory.decodeByteArray(icon, 0, icon.length);
-                            mCache.put(component, iconBitmap);
-                        }
-
-                        imageView.setImageBitmap(iconBitmap);
-                        imageView.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                getBaseContext().startActivity(intent);
-
-                                // Display a message if the app is not launching right away.
-                                final Handler handler = new Handler(Looper.getMainLooper());
-                                final Runnable runnable = new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-                                        ActivityManager.RunningTaskInfo runningTaskInfo = activityManager.getRunningTasks(1).get(0);
-
-                                        if (!runningTaskInfo.baseActivity.equals(component)) {
-                                            Toast.makeText(DockService.this, "Launching " + appName, Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                };
-                                handler.post(runnable);
-
-                            }
-                        });
-                    } catch (URISyntaxException e) {
-                        return true;
-                    }
-
-                    return true;
-                }
-
-                return false;
-            }
-        };
+        final SimpleCursorAdapter.ViewBinder binder = new DockItemViewBinder();
 
         mItemsAdapter.setViewBinder(binder);
         mItemList.setAdapter(mItemsAdapter);
@@ -289,6 +227,81 @@ public class DockService extends Service {
             mCursor = getContentResolver().query(DockItemsContract.DockItems.CONTENT_URI,
                     DOCK_ITEM_PROJECTION, null, null, DockItemsContract.DockItems.POSITION + " ASC");
             mItemsAdapter.changeCursor(mCursor);
+        }
+    }
+
+    /**
+     * Custom ViewBinder used to set the icon of the dock items.
+     */
+    private class DockItemViewBinder implements SimpleCursorAdapter.ViewBinder {
+
+        /**
+         * Icon cache.
+         */
+        private HashMap<ComponentName, Bitmap> mCache = new HashMap<>(50);
+
+        @Override
+        public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+            final String columnName = cursor.getColumnName(columnIndex);
+
+            if (columnName.equals(DockItemsContract.DockItems.ICON)) {
+                final ImageView imageView = (ImageView) view;
+                final String intentUri = cursor.getString(
+                        cursor.getColumnIndex(DockItemsContract.DockItems.INTENT));
+                final String appName = cursor.getString(
+                        cursor.getColumnIndex(DockItemsContract.DockItems.TITLE));
+
+                try {
+                    final Intent intent = Intent.parseUri(intentUri, 0);
+                    final ComponentName component = intent.getComponent();
+                    Bitmap iconBitmap = mCache.get(component);
+
+                    if (iconBitmap == null) {
+                        final byte[] icon = cursor.getBlob(columnIndex);
+                        iconBitmap = BitmapFactory.decodeByteArray(icon, 0, icon.length);
+                        mCache.put(component, iconBitmap);
+                    }
+
+                    imageView.setImageBitmap(iconBitmap);
+                    imageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            getBaseContext().startActivity(intent);
+
+                            // Display a message if the app is not launching right away.
+                            final Handler handler = new Handler(Looper.getMainLooper());
+                            final Runnable runnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    ActivityManager activityManager =
+                                            (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+                                    ActivityManager.RunningTaskInfo runningTaskInfo =
+                                            activityManager.getRunningTasks(1).get(0);
+
+                                    final String sourcePackage = component.getPackageName();
+                                    final String targetPackage =
+                                            runningTaskInfo.topActivity.getPackageName();
+
+                                    if (!sourcePackage.equals(targetPackage)) {
+                                        Toast.makeText(
+                                                DockService.this,
+                                                "Launching " + appName,
+                                                Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            };
+                            handler.postDelayed(runnable, 100);
+
+                        }
+                    });
+                } catch (URISyntaxException e) {
+                    return true;
+                }
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

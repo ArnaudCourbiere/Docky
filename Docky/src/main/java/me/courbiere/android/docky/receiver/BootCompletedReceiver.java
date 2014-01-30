@@ -20,7 +20,7 @@ public class BootCompletedReceiver extends BroadcastReceiver {
      * This method is called when the BroadcastReceiver is receiving an Intent
      * broadcast.  During this time you can use the other methods on
      * BroadcastReceiver to view/modify the current result values.  This method
-     * is always called within the main thread of its process, unless you
+     * is always called within the settings thread of its process, unless you
      * explicitly asked for it to be scheduled on a different thread using
      * {@link android.content.Context#registerReceiver(android.content.BroadcastReceiver,
      * IntentFilter, String, android.os.Handler)}.

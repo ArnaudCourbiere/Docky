@@ -9,7 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import me.courbiere.android.docky.util.ImageUtils;
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * TODO
@@ -104,8 +104,12 @@ public class AppInfo implements Parcelable {
         dest.writeParcelable(intent, 0);
 
         // Convert icon to bitmap.
-        Bitmap bitmap = ((BitmapDrawable) icon).getBitmap();
-        dest.writeParcelable(bitmap, 0);
+        if (icon != null) {
+            Bitmap bitmap = ((BitmapDrawable) icon).getBitmap();
+            dest.writeParcelable(bitmap, 0);
+        } else {
+            LOGW(TAG, "No icon found in AppInfo for " + title + ", " + intent);
+        }
     }
 
     private void readFromParcel(Parcel in) {

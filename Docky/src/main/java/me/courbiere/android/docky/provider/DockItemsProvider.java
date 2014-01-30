@@ -68,7 +68,7 @@ public class DockItemsProvider extends ContentProvider {
 
     /**
      * Initializes content provider on startup. This method is called for all registered content
-     * providers on the application main thread at application launch time. It must not perform
+     * providers on the application settings thread at application launch time. It must not perform
      * lengthy operations, or application startup will be delayed.
      *
      * @return true if the provider was successfully loaded, false otherwise.

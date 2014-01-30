@@ -520,7 +520,7 @@ public class DockLayout extends RelativeLayout {
          * Called when a shared preference is changed, added, or removed. This
          * may be called even if a preference is set to its existing value.
          * <p/>
-         * <p>This callback will be run on your main thread.
+         * <p>This callback will be run on your settings thread.
          *
          * @param sharedPreferences The {@link android.content.SharedPreferences} that received
          *                          the change.

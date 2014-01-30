@@ -14,6 +14,8 @@
 
     <string name="start">Start</string>
     <string name="stop">Stop</string>
+    <string name="start_dock">Start Dock</string>
+    <string name="stop_dock">Stop Dock</string>
     <string name="running">running</string>
     <string name="stopped">stopped</string>
     <string name="manage_dock_items">Manage Items</string>

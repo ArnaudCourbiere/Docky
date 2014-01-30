@@ -3,12 +3,12 @@ package me.courbiere.android.docky.test;
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
 
-import me.courbiere.android.docky.MainActivity;
+import me.courbiere.android.docky.ui.activity.ManageItemsActivity;
 
 /**
- * Unit test for me.courbiere.android.docky.MainActivity class.
+ * Unit test for me.courbiere.android.docky.ui.activity.ManageItemsActivity class.
  */
-public class TestMainActivity extends ActivityInstrumentationTestCase2<MainActivity> {
+public class TestManageItemsActivity extends ActivityInstrumentationTestCase2<ManageItemsActivity> {
 
     /**
      * The context being tested.
@@ -18,10 +18,10 @@ public class TestMainActivity extends ActivityInstrumentationTestCase2<MainActiv
     /**
      * The Activity to test
      */
-    private MainActivity mActivity;
+    private ManageItemsActivity mActivity;
 
-    public TestMainActivity() {
-        super(MainActivity.class);
+    public TestManageItemsActivity() {
+        super(ManageItemsActivity.class);
     }
 
     @Override

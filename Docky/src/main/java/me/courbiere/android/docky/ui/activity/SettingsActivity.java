@@ -3,11 +3,17 @@ package me.courbiere.android.docky.ui.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import me.courbiere.android.docky.R;
+import me.courbiere.android.docky.service.DockService;
 import me.courbiere.android.docky.ui.fragment.SettingsFragment;
+
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * User settings.
@@ -32,22 +38,54 @@ public class SettingsActivity extends Activity {
                 .commit();
     }
 
-    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
+        final MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.toggle_dock, menu);
         return true;
     }
 
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem toggleItem = menu.findItem(R.id.action_toggle_dock);
+
+        if (DockService.isRunning()) {
+            toggleItem.setTitle(getString(R.string.stop_dock));
+        } else {
+            toggleItem.setTitle(getString(R.string.start_dock));
+        }
+
+        return super.onPrepareOptionsMenu(menu);
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_settings:
-                final Intent intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
+            case R.id.action_toggle_dock:
+                if (DockService.isRunning()) {
+                    stopService(new Intent(this, DockService.class));
+                } else {
+                    startService(new Intent(this, DockService.class));
+                }
+
+                return true;
+
+            case R.id.action_manage_items:
+            case android.R.id.home:
+                final Intent upIntent = NavUtils.getParentActivityIntent(this);
+                final String action = getIntent().getAction();
+
+                if (action != null && action.equals(Intent.ACTION_VIEW)) {
+                    TaskStackBuilder.create(this)
+                            .addNextIntentWithParentStack(upIntent)
+                            .startActivities();
+                } else {
+                    NavUtils.navigateUpTo(this, upIntent);
+                }
+
                 return true;
         }
+
         return super.onOptionsItemSelected(item);
     }
-    */
 }
