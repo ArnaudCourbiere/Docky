@@ -11,6 +11,7 @@
     <string name="black">Black</string>
     <string name="const_style_white">STYLE_WHITE</string>
     <string name="const_style_black">STYLE_BLACK</string>
+    <string name="drag_handle_width">Drag Handle Width</string>
 
     <string name="start">Start</string>
     <string name="stop">Stop</string>

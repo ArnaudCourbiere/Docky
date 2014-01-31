@@ -208,7 +208,8 @@ public class ManageItemsActivity extends FragmentActivity {
             });
 
             // Load all apps.
-            if (savedInstanceState != null) {
+            if (false) {
+            //if (savedInstanceState != null) {
                 mApplications = savedInstanceState.getParcelableArrayList(KEY_APP_INFO_LIST);
 
                 final String[] dockItems = savedInstanceState.getStringArray(KEY_DOCK_ITEM_LIST);
@@ -226,10 +227,10 @@ public class ManageItemsActivity extends FragmentActivity {
         @Override
         public void onSaveInstanceState(Bundle outState) {
             super.onSaveInstanceState(outState);
-            outState.putParcelableArrayList(KEY_APP_INFO_LIST, mApplications);
+            //outState.putParcelableArrayList(KEY_APP_INFO_LIST, mApplications);
 
             final String[] dockItems = new String[mDockItems.size()];
-            outState.putStringArray(KEY_DOCK_ITEM_LIST, mDockItems.toArray(dockItems));
+            //outState.putStringArray(KEY_DOCK_ITEM_LIST, mDockItems.toArray(dockItems));
         }
 
         /**

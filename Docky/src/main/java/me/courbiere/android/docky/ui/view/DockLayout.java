@@ -393,6 +393,14 @@ public class DockLayout extends RelativeLayout {
      * Smoothly open the dock.
      */
     public void open() {
+    }
+
+    /**
+     * Smoothly open the dock.
+     *
+     * @param duration Animation duration.
+     */
+    public void open(int duration) {
         mDragger.smoothSlideViewTo(mDock, getWidth() - mDock.getWidth(), mDock.getTop());
         invalidate();
     }
@@ -403,6 +411,15 @@ public class DockLayout extends RelativeLayout {
     public void close() {
         mDragger.smoothSlideViewTo(mDock, getWidth(), mDock.getTop());
         invalidate();
+    }
+
+    /**
+     * Smoothly close the dock.
+     *
+     * @param duration Animation duration.
+     */
+    public void close(int duration) {
+
     }
 
     /**

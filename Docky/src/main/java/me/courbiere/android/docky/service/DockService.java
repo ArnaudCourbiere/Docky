@@ -266,11 +266,8 @@ public class DockService extends Service {
                     imageView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            getBaseContext().startActivity(intent);
-
-                            // Display a message if the app is not launching right away.
                             final Handler handler = new Handler(Looper.getMainLooper());
-                            final Runnable runnable = new Runnable() {
+                            final Runnable checkAppOnTop = new Runnable() {
                                 @Override
                                 public void run() {
                                     ActivityManager activityManager =
@@ -290,8 +287,16 @@ public class DockService extends Service {
                                     }
                                 }
                             };
-                            handler.postDelayed(runnable, 100);
 
+                            final Runnable launchApp = new Runnable() {
+                                @Override
+                                public void run() {
+                                    getBaseContext().startActivity(intent);
+                                    handler.postDelayed(checkAppOnTop, 100);
+                                }
+                            };
+
+                            handler.postDelayed(launchApp, 200);
                         }
                     });
                 } catch (URISyntaxException e) {

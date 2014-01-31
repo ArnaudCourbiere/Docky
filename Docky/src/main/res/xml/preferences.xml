@@ -9,4 +9,10 @@
         android:entries="@array/dock_styles_entries"
         android:entryValues="@array/dock_styles_values"
         android:defaultValue="@string/const_style_white"/>
+
+    <me.courbiere.android.docky.ui.dialog.SliderPreference
+        android:key="preferences_drag_handle_width"
+        android:title="@string/drag_handle_width"
+        android:summary="15"
+        android:defaultValue="15"/>
 </PreferenceScreen>
