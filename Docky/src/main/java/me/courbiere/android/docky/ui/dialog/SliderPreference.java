@@ -13,6 +13,9 @@ import android.widget.SeekBar;
 import android.content.SharedPreferences;
 
 import me.courbiere.android.docky.R;
+import me.courbiere.android.docky.ui.activity.SettingsActivity;
+
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * Slider Preference.
@@ -28,7 +31,12 @@ public class SliderPreference extends DialogPreference {
     /**
      * Slider's default value.
      */
-    private static final int DEFAULT_VALUE = 15;
+    public static final int DEFAULT_VALUE = 20;
+
+    /**
+     * Max value.
+     */
+    public static final int MAX_VALUE = 20;
 
     /**
      * Slider's current value.
@@ -63,6 +71,9 @@ public class SliderPreference extends DialogPreference {
         super.onBindDialogView(view);
 
         mSlider = (SeekBar) view.findViewById(R.id.slider);
+
+        mSlider.setProgress(mCurrentValue);
+        mSlider.setMax(MAX_VALUE);
     }
 
     /**
@@ -74,7 +85,8 @@ public class SliderPreference extends DialogPreference {
      */
     @Override
     protected void onDialogClosed(boolean positiveResult) {
-        if (positiveResult) {
+        if (positiveResult && mSlider != null) {
+            mCurrentValue = mSlider.getProgress();
             persistValue(mCurrentValue);
         }
     }
@@ -124,7 +136,10 @@ public class SliderPreference extends DialogPreference {
     }
 
     private void persistValue(int value) {
+        final SharedPreferences.Editor editor = getSharedPreferences().edit();
 
+        editor.putInt(SettingsActivity.PREFERENCES_DRAG_HANDLE_WIDTH, value);
+        editor.commit();
     }
 
     /* Lifecycle methods */

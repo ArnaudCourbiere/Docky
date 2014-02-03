@@ -23,6 +23,7 @@ public class SettingsActivity extends Activity {
 
     /* Constants used to retrieve user preferences */
     public static final String PREFERENCES_STYLE = "preferences_style";
+    public static final String PREFERENCES_DRAG_HANDLE_WIDTH = "preferences_drag_handle_width";
     public static final String PREFERENCES_START_DOCK_ON_BOOT = "preferences_start_dock_on_boot";
 
     /* Dock style constants (used to store style in preferences) */

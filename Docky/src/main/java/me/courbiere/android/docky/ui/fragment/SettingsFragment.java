@@ -9,6 +9,7 @@ import android.preference.PreferenceManager;
 
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
+import me.courbiere.android.docky.ui.dialog.SliderPreference;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
 
@@ -34,6 +35,7 @@ public class SettingsFragment extends PreferenceFragment
                 getPreferenceScreen().getSharedPreferences();
 
         setSummary(sharedPreferences, SettingsActivity.PREFERENCES_STYLE);
+        setSummary(sharedPreferences, SettingsActivity.PREFERENCES_DRAG_HANDLE_WIDTH);
         sharedPreferences.registerOnSharedPreferenceChangeListener(this);
     }
 
@@ -51,17 +53,26 @@ public class SettingsFragment extends PreferenceFragment
     }
 
     private void setSummary(SharedPreferences sharedPreferences, String key) {
-        if (key.equals(SettingsActivity.PREFERENCES_STYLE)) {
-            final Preference stylePref = findPreference(key);
-            switch (sharedPreferences.getString(key, SettingsActivity.STYLE_WHITE)) {
-                case SettingsActivity.STYLE_BLACK:
-                    stylePref.setSummary(getString(R.string.black));
-                    break;
+        final Preference pref = findPreference(key);
+        switch (key) {
+            case SettingsActivity.PREFERENCES_STYLE:
+                switch (sharedPreferences.getString(key, SettingsActivity.STYLE_WHITE)) {
+                    case SettingsActivity.STYLE_BLACK:
+                        pref.setSummary(getString(R.string.black));
+                        break;
 
-                case SettingsActivity.STYLE_WHITE:
-                default:
-                    stylePref.setSummary(getString(R.string.white));
-            }
+                    case SettingsActivity.STYLE_WHITE:
+                    default:
+                        pref.setSummary(getString(R.string.white));
+                }
+                break;
+
+            case SettingsActivity.PREFERENCES_DRAG_HANDLE_WIDTH:
+                final int dragHandleWidth =
+                        sharedPreferences.getInt(key, SliderPreference.DEFAULT_VALUE);
+
+                pref.setSummary(dragHandleWidth * (100 / SliderPreference.MAX_VALUE) + "%");
+                break;
         }
     }
 }

@@ -37,8 +37,6 @@ import me.courbiere.android.docky.ui.activity.ManageItemsActivity;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
 import me.courbiere.android.docky.ui.view.DockLayout;
 
-import static me.courbiere.android.docky.util.LogUtils.*;
-
 /**
  * Attaches the DockLayout to the window.
  */

@@ -33,7 +33,7 @@ public class BootCompletedReceiver extends BroadcastReceiver {
         if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
             final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-            if (prefs.getBoolean(SettingsActivity.PREFERENCES_START_DOCK_ON_BOOT, false)) {
+            if (prefs.getBoolean(SettingsActivity.PREFERENCES_DRAG_HANDLE_WIDTH, false)) {
                 context.startService(new Intent(context, DockService.class));
             }
         }

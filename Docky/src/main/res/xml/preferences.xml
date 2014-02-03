@@ -13,6 +13,6 @@
     <me.courbiere.android.docky.ui.dialog.SliderPreference
         android:key="preferences_drag_handle_width"
         android:title="@string/drag_handle_width"
-        android:summary="15"
-        android:defaultValue="15"/>
+        android:summary="100%"
+        android:defaultValue="20"/>
 </PreferenceScreen>
