@@ -12,10 +12,12 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.view.LayoutInflater;
@@ -263,7 +265,7 @@ public class DockService extends Service {
                     imageView.setImageBitmap(iconBitmap);
                     imageView.setOnClickListener(new View.OnClickListener() {
                         @Override
-                        public void onClick(View v) {
+                        public void onClick(final View source) {
                             final Handler handler = new Handler(Looper.getMainLooper());
                             final Runnable checkAppOnTop = new Runnable() {
                                 @Override
@@ -289,7 +291,10 @@ public class DockService extends Service {
                             final Runnable launchApp = new Runnable() {
                                 @Override
                                 public void run() {
-                                    getBaseContext().startActivity(intent);
+                                    final Bundle options = ActivityOptionsCompat
+                                            .makeScaleUpAnimation(source, 0, 0, 0, 0)
+                                            .toBundle();
+                                    startActivity(intent, options);
                                     handler.postDelayed(checkAppOnTop, 100);
                                 }
                             };

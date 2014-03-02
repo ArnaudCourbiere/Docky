@@ -545,8 +545,12 @@ public class DockLayout extends RelativeLayout {
          */
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if (mDock != null && key.equals(SettingsActivity.PREFERENCES_STYLE)) {
-                setDockBackground(sharedPreferences);
+            if (mDock != null) {
+                switch (key) {
+                    case SettingsActivity.PREFERENCES_STYLE:
+                        setDockBackground(sharedPreferences);
+                        break;
+                }
             }
         }
     }
