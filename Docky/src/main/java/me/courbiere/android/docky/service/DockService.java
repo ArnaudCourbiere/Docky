@@ -238,7 +238,7 @@ public class DockService extends Service {
         /**
          * Icon cache.
          */
-        private HashMap<ComponentName, Bitmap> mCache = new HashMap<>(50);
+        private HashMap<String, Bitmap> mCache = new HashMap<>(50);
 
         @Override
         public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
@@ -254,12 +254,12 @@ public class DockService extends Service {
                 try {
                     final Intent intent = Intent.parseUri(intentUri, 0);
                     final ComponentName component = intent.getComponent();
-                    Bitmap iconBitmap = mCache.get(component);
+                    Bitmap iconBitmap = mCache.get(intentUri);
 
                     if (iconBitmap == null) {
                         final byte[] icon = cursor.getBlob(columnIndex);
                         iconBitmap = BitmapFactory.decodeByteArray(icon, 0, icon.length);
-                        mCache.put(component, iconBitmap);
+                        mCache.put(intentUri, iconBitmap);
                     }
 
                     imageView.setImageBitmap(iconBitmap);
