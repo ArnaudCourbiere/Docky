@@ -12,7 +12,7 @@
         android:layout_marginTop="25dp"
         android:layout_alignParentRight="true">
 
-        <ListView
+        <me.courbiere.android.docky.ui.view.DraggableListView
             android:id="@+id/dock_item_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -20,11 +20,12 @@
             android:orientation="vertical"
             android:divider="@android:color/transparent"
             android:dividerHeight="15dp"
-            android:scrollbarStyle="outsideInset"
+            android:scrollbars="none"
             android:overScrollMode="never"
             android:clipToPadding="false"
             android:paddingTop="10dp"
-            android:paddingBottom="10dp"/>
+            android:paddingBottom="10dp"
+            android:listSelector="@android:color/transparent"/>
 
     </LinearLayout>
 

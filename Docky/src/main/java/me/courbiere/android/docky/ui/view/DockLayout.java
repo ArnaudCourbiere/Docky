@@ -12,9 +12,12 @@ import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 
 import me.courbiere.android.docky.R;
@@ -62,6 +65,12 @@ public class DockLayout extends RelativeLayout {
     public static final int LOCK_MODE_LOCKED_OPEN = 2;
 
     /**
+     * Locks the dock on up once. Used to keep the dock opened when the user releases from a long
+     * press.
+     */
+    public static final int LOCK_MODE_LOCKED_ON_UP_ONCE = 3;
+
+    /**
      * Minimum velocity that will be detected as a fling
      */
     private static final int MIN_FLING_VELOCITY = 400; // dips per second
@@ -94,6 +103,11 @@ public class DockLayout extends RelativeLayout {
     private View mDock;
 
     /**
+     * Dock Items list.
+     */
+    private DraggableListView mDockItems;
+
+    /**
      * Window Manager. Needed to attach the DockLayout to the window (on top of every other window)
      * and to resize the DockLayout.
      */
@@ -113,6 +127,11 @@ public class DockLayout extends RelativeLayout {
      * Listener for shared preferences changes.
      */
     private final PreferenceChangeListener mPreferenceChangeListener;
+
+    /**
+     * Listener for dock item long click.
+     */
+    private final ItemLongClickListener mItemLongClickListener;
 
     /**
      * Dock current lock mode.
@@ -136,6 +155,7 @@ public class DockLayout extends RelativeLayout {
         mDockLayoutWidth = (int) getResources().getDimension(R.dimen.dock_layout_width);
         mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         mPreferenceChangeListener = new PreferenceChangeListener();
+        mItemLongClickListener = new ItemLongClickListener();
         mDragCallback = new ViewDragCallback();
         mDragger = ViewDragHelper.create(this, TOUCH_SLOP_SENSITIVITY, mDragCallback);
         mDragger.setEdgeTrackingEnabled(ViewDragHelper.EDGE_RIGHT | ViewDragHelper.EDGE_LEFT);
@@ -176,6 +196,7 @@ public class DockLayout extends RelativeLayout {
      */
     public void attachToWindow() {
         mDock = findViewById(R.id.dock);
+        mDockItems = (DraggableListView) findViewById(R.id.dock_item_list);
         setDockBackground(PreferenceManager.getDefaultSharedPreferences(getContext()));
 
         final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
@@ -185,7 +206,8 @@ public class DockLayout extends RelativeLayout {
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                         | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
                         | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
+                        //| WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                         PixelFormat.TRANSLUCENT);
 
@@ -222,6 +244,7 @@ public class DockLayout extends RelativeLayout {
         super.onAttachedToWindow();
         PreferenceManager.getDefaultSharedPreferences(getContext())
                 .registerOnSharedPreferenceChangeListener(mPreferenceChangeListener);
+        mDockItems.registerOnItemLongClickListener(mItemLongClickListener);
     }
 
     @Override
@@ -229,6 +252,7 @@ public class DockLayout extends RelativeLayout {
         super.onDetachedFromWindow();
         PreferenceManager.getDefaultSharedPreferences(getContext())
                 .unregisterOnSharedPreferenceChangeListener(mPreferenceChangeListener);
+        mDockItems.unregisterOnItemLongClickListener(mItemLongClickListener);
     }
 
     /*
@@ -241,6 +265,7 @@ public class DockLayout extends RelativeLayout {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        LOGD(TAG, "on layout");
         int marginTop= (int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, 25, getResources().getDisplayMetrics());
 
@@ -252,6 +277,7 @@ public class DockLayout extends RelativeLayout {
             right += mDock.getLeft();
         }
 
+        LOGD(TAG, "left: " + left + ", top: " + (t + marginTop) + ", right: " + right + ", bottom: " + b);
         mDock.layout(left, t + marginTop, right, b);
     }
 
@@ -274,6 +300,9 @@ public class DockLayout extends RelativeLayout {
             case MotionEvent.ACTION_UP:
                 if (getLockMode() == LOCK_MODE_UNLOCKED) {
                     close();
+                }
+                if (getLockMode() == LOCK_MODE_LOCKED_ON_UP_ONCE) {
+                    setLockMode(LOCK_MODE_UNLOCKED);
                 }
                 break;
         }
@@ -312,6 +341,20 @@ public class DockLayout extends RelativeLayout {
         }
 
         return wantTouchEvents;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param event
+     */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            close();
+        }
+
+        return super.dispatchKeyEvent(event);
     }
 
     /**
@@ -393,6 +436,8 @@ public class DockLayout extends RelativeLayout {
      * Smoothly open the dock.
      */
     public void open() {
+        mDragger.smoothSlideViewTo(mDock, getWidth() - mDock.getWidth(), mDock.getTop());
+        invalidate();
     }
 
     /**
@@ -401,14 +446,19 @@ public class DockLayout extends RelativeLayout {
      * @param duration Animation duration.
      */
     public void open(int duration) {
-        mDragger.smoothSlideViewTo(mDock, getWidth() - mDock.getWidth(), mDock.getTop());
-        invalidate();
     }
 
     /**
      * Smoothly close the dock.
      */
     public void close() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
+            dockLayoutLp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+            dockLayoutLp.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+            mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+        }
+
         mDragger.smoothSlideViewTo(mDock, getWidth(), mDock.getTop());
         invalidate();
     }
@@ -419,7 +469,6 @@ public class DockLayout extends RelativeLayout {
      * @param duration Animation duration.
      */
     public void close(int duration) {
-
     }
 
     /**
@@ -429,8 +478,7 @@ public class DockLayout extends RelativeLayout {
         mDockLayoutHeight = getHeight(); // TODO: remove if not needed.
         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
         dockLayoutLp.x = -mDock.getWidth();
-//        dockLayoutLp.width= mDockLayoutWidth;
-//        dockLayoutLp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        dockLayoutLp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         dockLayoutLp.flags |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
         mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
         mDock.setVisibility(INVISIBLE);
@@ -442,8 +490,7 @@ public class DockLayout extends RelativeLayout {
     private void unfoldContainer() {
         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
         dockLayoutLp.x = 0;
-//        dockLayoutLp.width= WindowManager.LayoutParams.MATCH_PARENT;
-//        dockLayoutLp.height = WindowManager.LayoutParams.MATCH_PARENT;
+        dockLayoutLp.flags &= ~WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         dockLayoutLp.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
         mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
     }
@@ -465,13 +512,6 @@ public class DockLayout extends RelativeLayout {
                     // If drawer is closed, fold container.
                     if (mDock.getLeft() >= getWidth()) {
                         foldContainer();
-                        /*
-                    } else {
-                        final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
-                        dockLayoutLp.width = mDockLayoutWidth;
-                        dockLayoutLp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-                        mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
-                        */
                     }
 
                     break;
@@ -552,6 +592,32 @@ public class DockLayout extends RelativeLayout {
                         break;
                 }
             }
+        }
+    }
+
+    /**
+     * Listener, locks the dock on list items long click.
+     */
+    private class ItemLongClickListener implements AdapterView.OnItemLongClickListener {
+
+        /**
+         * Callback method to be invoked when an item in this view has been
+         * clicked and held.
+         * <p/>
+         * Implementers can call getItemAtPosition(position) if they need to access
+         * the data associated with the selected item.
+         *
+         * @param parent   The AbsListView where the click happened
+         * @param view     The view within the AbsListView that was clicked
+         * @param position The position of the view in the list
+         * @param id       The row id of the item that was clicked
+         * @return true if the callback consumed the long click, false otherwise
+         */
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            LOGD(TAG, "long press");
+            setLockMode(LOCK_MODE_LOCKED_ON_UP_ONCE);
+            return true;
         }
     }
 }

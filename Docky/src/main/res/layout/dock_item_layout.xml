@@ -4,12 +4,11 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="center"
-    android:paddingLeft="6dp">
+    android:gravity="center">
 
     <ImageView
         android:id="@+id/app_icon"
         android:layout_width="@dimen/dock_item_width"
-        android:layout_height="@dimen/dock_item_height" />
+        android:layout_height="@dimen/dock_item_height"/>
 
 </LinearLayout>

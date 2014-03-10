@@ -98,7 +98,8 @@ public class DockService extends Service {
         prefs.edit().putBoolean(SettingsActivity.PREFERENCES_START_DOCK_ON_BOOT, true).commit();
 
         goToForeground();
-        initListView();
+        initViews();
+        initListeners();
 
         mDockItemObserver = new DockItemObserver(new Handler());
         getContentResolver().registerContentObserver(
@@ -142,19 +143,12 @@ public class DockService extends Service {
         startForeground(1337, notification);
     }
 
-    private void initListView() {
+    private void initViews() {
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 
         mDockLayout = (DockLayout) inflater.inflate(R.layout.dock_layout, null);
         mDock = (LinearLayout) mDockLayout.findViewById(R.id.dock);
         mItemList = (ListView) mDockLayout.findViewById(R.id.dock_item_list);
-        mItemList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(getBaseContext(), "Long click", Toast.LENGTH_SHORT).show();
-                return true;
-            }
-        });
 
         final String[] from = new String[] {DockItemsContract.DockItems.ICON };
         final int[] to = new int[] { R.id.app_icon };
@@ -171,6 +165,59 @@ public class DockService extends Service {
 
         mItemsAdapter.setViewBinder(binder);
         mItemList.setAdapter(mItemsAdapter);
+    }
+
+    private void initListeners() {
+        mItemList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
+                final Cursor cursor = (Cursor) parent.getItemAtPosition(position);
+                final String intentUri = cursor.getString(
+                        cursor.getColumnIndex(DockItemsContract.DockItems.INTENT));
+                final String appName = cursor.getString(
+                        cursor.getColumnIndex(DockItemsContract.DockItems.TITLE));
+
+                try {
+                    final Intent intent = Intent.parseUri(intentUri, 0);
+                    final Handler handler = new Handler(Looper.getMainLooper());
+                    final Runnable checkAppOnTop = new Runnable() {
+                        @Override
+                        public void run() {
+                            ActivityManager activityManager =
+                                    (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+                            ActivityManager.RunningTaskInfo runningTaskInfo =
+                                    activityManager.getRunningTasks(1).get(0);
+
+                            final String sourcePackage = intent.getComponent().getPackageName();
+                            final String targetPackage =
+                                    runningTaskInfo.topActivity.getPackageName();
+
+                            if (!sourcePackage.equals(targetPackage)) {
+                                Toast.makeText(
+                                        DockService.this,
+                                        "Launching " + appName,
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    };
+
+                    final Runnable launchApp = new Runnable() {
+                        @Override
+                        public void run() {
+                            final Bundle options = ActivityOptionsCompat
+                                    .makeScaleUpAnimation(view, 0, 0, 0, 0)
+                                    .toBundle();
+                            startActivity(intent, options);
+                            handler.postDelayed(checkAppOnTop, 100);
+                        }
+                    };
+
+                    handler.postDelayed(launchApp, 200);
+                } catch (URISyntaxException e) {
+
+                }
+            }
+        });
     }
 
     /**
@@ -248,63 +295,16 @@ public class DockService extends Service {
                 final ImageView imageView = (ImageView) view;
                 final String intentUri = cursor.getString(
                         cursor.getColumnIndex(DockItemsContract.DockItems.INTENT));
-                final String appName = cursor.getString(
-                        cursor.getColumnIndex(DockItemsContract.DockItems.TITLE));
 
-                try {
-                    final Intent intent = Intent.parseUri(intentUri, 0);
-                    final ComponentName component = intent.getComponent();
-                    Bitmap iconBitmap = mCache.get(intentUri);
+                Bitmap iconBitmap = mCache.get(intentUri);
 
-                    if (iconBitmap == null) {
-                        final byte[] icon = cursor.getBlob(columnIndex);
-                        iconBitmap = BitmapFactory.decodeByteArray(icon, 0, icon.length);
-                        mCache.put(intentUri, iconBitmap);
-                    }
-
-                    imageView.setImageBitmap(iconBitmap);
-                    imageView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(final View source) {
-                            final Handler handler = new Handler(Looper.getMainLooper());
-                            final Runnable checkAppOnTop = new Runnable() {
-                                @Override
-                                public void run() {
-                                    ActivityManager activityManager =
-                                            (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-                                    ActivityManager.RunningTaskInfo runningTaskInfo =
-                                            activityManager.getRunningTasks(1).get(0);
-
-                                    final String sourcePackage = component.getPackageName();
-                                    final String targetPackage =
-                                            runningTaskInfo.topActivity.getPackageName();
-
-                                    if (!sourcePackage.equals(targetPackage)) {
-                                        Toast.makeText(
-                                                DockService.this,
-                                                "Launching " + appName,
-                                                Toast.LENGTH_LONG).show();
-                                    }
-                                }
-                            };
-
-                            final Runnable launchApp = new Runnable() {
-                                @Override
-                                public void run() {
-                                    final Bundle options = ActivityOptionsCompat
-                                            .makeScaleUpAnimation(source, 0, 0, 0, 0)
-                                            .toBundle();
-                                    startActivity(intent, options);
-                                    handler.postDelayed(checkAppOnTop, 100);
-                                }
-                            };
-
-                            handler.postDelayed(launchApp, 200);
-                        }
-                    });
-                } catch (URISyntaxException e) {
-                    return true;
+                if (iconBitmap == null) {
+                    final byte[] icon = cursor.getBlob(columnIndex);
+                    iconBitmap = BitmapFactory.decodeByteArray(icon, 0, icon.length);
+                    mCache.put(intentUri, iconBitmap);
                 }
+
+                imageView.setImageBitmap(iconBitmap);
 
                 return true;
             }
