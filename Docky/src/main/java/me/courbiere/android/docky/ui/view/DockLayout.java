@@ -206,8 +206,8 @@ public class DockLayout extends RelativeLayout {
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                         | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
                         | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-                        | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
-                        //| WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+//                        | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
+//                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                         PixelFormat.TRANSLUCENT);
 
@@ -452,12 +452,12 @@ public class DockLayout extends RelativeLayout {
      * Smoothly close the dock.
      */
     public void close() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
-            dockLayoutLp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-            dockLayoutLp.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
-            mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+//            final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
+//            dockLayoutLp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+//            dockLayoutLp.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+//            mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
+//        }
 
         mDragger.smoothSlideViewTo(mDock, getWidth(), mDock.getTop());
         invalidate();
