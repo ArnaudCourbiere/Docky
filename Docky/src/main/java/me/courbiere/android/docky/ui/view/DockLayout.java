@@ -265,20 +265,21 @@ public class DockLayout extends RelativeLayout {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        LOGD(TAG, "on layout");
-        int marginTop= (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, 25, getResources().getDisplayMetrics());
-
-        int left = getMeasuredWidth() - mDock.getMeasuredWidth();
-        int right = mDock.getMeasuredWidth() + left;
-
-        if (mDock.getLeft() != (getWidth() - mDock.getWidth()) * 2) {
-            left += mDock.getLeft();
-            right += mDock.getLeft();
+        if (!changed) {
+            return;
         }
 
-        LOGD(TAG, "left: " + left + ", top: " + (t + marginTop) + ", right: " + right + ", bottom: " + b);
-        mDock.layout(left, t + marginTop, right, b);
+        if (mDock.getVisibility() == VISIBLE) {
+            super.onLayout(changed, l, t, r, b);
+        } else {
+            int marginTop= (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, 25, getResources().getDisplayMetrics());
+
+            int left = getMeasuredWidth();
+            int right = mDock.getMeasuredWidth() + left;
+
+            mDock.layout(left, t + marginTop, right, b);
+        }
     }
 
     @Override
@@ -452,13 +453,6 @@ public class DockLayout extends RelativeLayout {
      * Smoothly close the dock.
      */
     public void close() {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-//            final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
-//            dockLayoutLp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-//            dockLayoutLp.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
-//            mWindowManager.updateViewLayout(DockLayout.this, dockLayoutLp);
-//        }
-
         mDragger.smoothSlideViewTo(mDock, getWidth(), mDock.getTop());
         invalidate();
     }
@@ -560,8 +554,8 @@ public class DockLayout extends RelativeLayout {
 
         @Override
         public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
-            if (mDock.getVisibility() == INVISIBLE) {
-                mDock.setVisibility(VISIBLE);
+            if (mDock.getVisibility() == View.INVISIBLE) {
+                mDock.setVisibility(View.VISIBLE);
             }
 
             invalidate();
@@ -615,7 +609,6 @@ public class DockLayout extends RelativeLayout {
          */
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            LOGD(TAG, "long press");
             setLockMode(LOCK_MODE_LOCKED_ON_UP_ONCE);
             return true;
         }
