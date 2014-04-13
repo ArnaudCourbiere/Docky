@@ -37,7 +37,10 @@ import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.provider.DockItemsContract;
 import me.courbiere.android.docky.ui.activity.ManageItemsActivity;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
+import me.courbiere.android.docky.ui.adapter.SortableCursorAdapter;
 import me.courbiere.android.docky.ui.view.DockLayout;
+
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * Attaches the DockLayout to the window.
@@ -101,6 +104,7 @@ public class DockService extends Service {
         initViews();
         initListeners();
 
+        // Observer for addition and deletion of dock items.
         mDockItemObserver = new DockItemObserver(new Handler());
         getContentResolver().registerContentObserver(
                 DockItemsContract.DockItems.CONTENT_URI, true, mDockItemObserver);
@@ -117,6 +121,10 @@ public class DockService extends Service {
         return sRunning;
     }
 
+    /**
+     * Runs the service in the foreground (this prevents the service from being terminated
+     * when the device is low on memory).
+     */
     private void goToForeground() {
         final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_notification)
@@ -143,6 +151,9 @@ public class DockService extends Service {
         startForeground(1337, notification);
     }
 
+    /**
+     * Queries the dock items and sets the adapter on the dock list view.
+     */
     private void initViews() {
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 
@@ -155,7 +166,7 @@ public class DockService extends Service {
 
         mCursor = getContentResolver().query(DockItemsContract.DockItems.CONTENT_URI,
                 DOCK_ITEM_PROJECTION, null, null, DockItemsContract.DockItems.POSITION + " ASC");
-        mItemsAdapter = new SimpleCursorAdapter(getBaseContext(), R.layout.dock_item_layout,
+        mItemsAdapter = new SortableCursorAdapter(getBaseContext(), R.layout.dock_item_layout,
                 mCursor, from, to, 0);
 
         // TODO: Improvement: use the holder pattern.
@@ -167,6 +178,9 @@ public class DockService extends Service {
         mItemList.setAdapter(mItemsAdapter);
     }
 
+    /**
+     * Sets up the click listener responsible for launching apps.
+     */
     private void initListeners() {
         mItemList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -289,6 +303,7 @@ public class DockService extends Service {
 
         @Override
         public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+            LOGD(TAG, "setViewValue()");
             final String columnName = cursor.getColumnName(columnIndex);
 
             if (columnName.equals(DockItemsContract.DockItems.ICON)) {

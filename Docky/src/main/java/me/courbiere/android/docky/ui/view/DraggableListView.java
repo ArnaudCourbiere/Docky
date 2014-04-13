@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import me.courbiere.android.docky.ui.adapter.SortableCursorAdapter;
+
 import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
@@ -39,7 +41,7 @@ import static me.courbiere.android.docky.util.LogUtils.*;
 public class DraggableListView extends ListView {
     private static final String TAG = "DraggableListView";
 
-    private final int SMOOTH_SCROLL_AMOUNT_AT_EDGE = 15;
+    private final int SMOOTH_SCROLL_AMOUNT_AT_EDGE = 45;
     private final int MOVE_DURATION = 150;
     private final int LINE_THICKNESS = 15;
 
@@ -116,10 +118,14 @@ public class DraggableListView extends ListView {
                     mTotalOffset = 0;
 
                     int position = pointToPosition(mDownX, mDownY);
+                    LOGD(TAG, "item position: " + position);
                     int itemNum = position - getFirstVisiblePosition();
+                    LOGD(TAG, "item num: " + itemNum);
 
                     View selectedView = getChildAt(itemNum);
                     mMobileItemId = getAdapter().getItemId(position);
+                    LOGD(TAG, "mobile item id: " + mMobileItemId);
+
                     mHoverCell = getAndAddHoverView(selectedView);
                     selectedView.setVisibility(INVISIBLE);
 
@@ -206,6 +212,8 @@ public class DraggableListView extends ListView {
         CursorAdapter adapter = ((CursorAdapter)getAdapter());
         mAboveItemId = adapter.getItemId(position - 1);
         mBelowItemId = adapter.getItemId(position + 1);
+        LOGD(TAG, "above item id: " + mAboveItemId);
+        LOGD(TAG, "below item id: " + mBelowItemId);
     }
 
     /** Retrieves the view in the list corresponding to itemID */
@@ -336,9 +344,11 @@ public class DraggableListView extends ListView {
                 return;
             }
 
-            // swapElements(mCheeseList, originalItem, getPositionForView(switchView));
+            SortableCursorAdapter adapter = (SortableCursorAdapter) getAdapter();
+            adapter.swap(originalItem, getPositionForView(switchView));
 
-            ((BaseAdapter) getAdapter()).notifyDataSetChanged();
+            // swapElements(mCheeseList, originalItem, getPositionForView(switchView));
+            // ((BaseAdapter) getAdapter()).notifyDataSetChanged();
 
             mDownY = mLastEventY;
 
@@ -385,6 +395,7 @@ public class DraggableListView extends ListView {
      * the hover cell back to its correct location.
      */
     private void touchEventsEnded () {
+        LOGD(TAG, "touchEventsEnder()");
         final View mobileView = getViewForID(mMobileItemId);
         if (mCellIsMobile|| mIsWaitingForScrollFinish) {
             mCellIsMobile = false;
@@ -418,6 +429,7 @@ public class DraggableListView extends ListView {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
+                    LOGD(TAG, "onAnimationEnd()");
                     mAboveItemId = INVALID_ID;
                     mMobileItemId = INVALID_ID;
                     mBelowItemId = INVALID_ID;
