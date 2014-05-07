@@ -17,13 +17,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
-
-import static me.courbiere.android.docky.util.LogUtils.LOGD;
 
 /**
  * Dock Layout. This View is responsible for managing the dock positioning, it sits on top of every

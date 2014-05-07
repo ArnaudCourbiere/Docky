@@ -4,7 +4,6 @@ import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
@@ -39,8 +38,6 @@ import me.courbiere.android.docky.ui.activity.ManageItemsActivity;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
 import me.courbiere.android.docky.ui.adapter.SortableCursorAdapter;
 import me.courbiere.android.docky.ui.view.DockLayout;
-
-import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * Attaches the DockLayout to the window.
@@ -303,7 +300,6 @@ public class DockService extends Service {
 
         @Override
         public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-            LOGD(TAG, "setViewValue()");
             final String columnName = cursor.getColumnName(columnIndex);
 
             if (columnName.equals(DockItemsContract.DockItems.ICON)) {

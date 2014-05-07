@@ -126,7 +126,6 @@ public class DbHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onCreate(SQLiteDatabase db) {
-        LOGD(TAG, "onCreate()");
         for (String schema : SCHEMAS) {
             db.execSQL(schema);
         }

@@ -17,12 +17,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PaintDrawable;
 import android.util.DisplayMetrics;
-import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import me.courbiere.android.docky.R;
+
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * TODO
@@ -78,7 +79,7 @@ public class ImageUtils {
             out.close();
             return out.toByteArray();
         } catch (IOException e) {
-            Log.w("Favorite", "Could not write icon");
+            LOGW(TAG, "Could not write icon");
             return null;
         }
     }

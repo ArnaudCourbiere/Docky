@@ -8,8 +8,6 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
@@ -20,32 +18,22 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 
-import com.google.android.gms.maps.model.Circle;
-
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import me.courbiere.android.docky.ui.adapter.SortableCursorAdapter;
 
-import static me.courbiere.android.docky.util.LogUtils.*;
-
 /**
- * Created by arnaud on 3/9/14.
+ * ListView whose items can be reorder by drag and drop.
  */
 public class DraggableListView extends ListView {
     private static final String TAG = "DraggableListView";
 
     private final int SMOOTH_SCROLL_AMOUNT_AT_EDGE = 45;
     private final int MOVE_DURATION = 150;
-    private final int LINE_THICKNESS = 15;
-
-    public ArrayList<String> mCheeseList;
 
     private int mLastEventY = -1;
 
@@ -118,13 +106,10 @@ public class DraggableListView extends ListView {
                     mTotalOffset = 0;
 
                     int position = pointToPosition(mDownX, mDownY);
-                    LOGD(TAG, "item position: " + position);
                     int itemNum = position - getFirstVisiblePosition();
-                    LOGD(TAG, "item num: " + itemNum);
 
                     View selectedView = getChildAt(itemNum);
                     mMobileItemId = getAdapter().getItemId(position);
-                    LOGD(TAG, "mobile item id: " + mMobileItemId);
 
                     mHoverCell = getAndAddHoverView(selectedView);
                     selectedView.setVisibility(INVISIBLE);
@@ -166,7 +151,6 @@ public class DraggableListView extends ListView {
         Bitmap bitmap = getBitmapFromView(v);
 
         if (!bitmap.isMutable()) {
-            LOGD(TAG, "Copying bitmap");
             bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         }
 
@@ -212,8 +196,6 @@ public class DraggableListView extends ListView {
         CursorAdapter adapter = ((CursorAdapter)getAdapter());
         mAboveItemId = adapter.getItemId(position - 1);
         mBelowItemId = adapter.getItemId(position + 1);
-        LOGD(TAG, "above item id: " + mAboveItemId);
-        LOGD(TAG, "below item id: " + mBelowItemId);
     }
 
     /** Retrieves the view in the list corresponding to itemID */
@@ -345,10 +327,12 @@ public class DraggableListView extends ListView {
             }
 
             SortableCursorAdapter adapter = (SortableCursorAdapter) getAdapter();
+
             adapter.swap(originalItem, getPositionForView(switchView));
 
-            // swapElements(mCheeseList, originalItem, getPositionForView(switchView));
-            // ((BaseAdapter) getAdapter()).notifyDataSetChanged();
+            // Force children to be re-computed.
+            // This is necessary because for some reason, the adapter swap doesn't cause onLayout to be called.
+            layoutChildren();
 
             mDownY = mLastEventY;
 
@@ -384,18 +368,11 @@ public class DraggableListView extends ListView {
         }
     }
 
-    private void swapElements(ArrayList arrayList, int indexOne, int indexTwo) {
-        Object temp = arrayList.get(indexOne);
-        arrayList.set(indexOne, arrayList.get(indexTwo));
-        arrayList.set(indexTwo, temp);
-    }
-
     /**
      * Resets all the appropriate fields to a default state while also animating
      * the hover cell back to its correct location.
      */
     private void touchEventsEnded () {
-        LOGD(TAG, "touchEventsEnder()");
         final View mobileView = getViewForID(mMobileItemId);
         if (mCellIsMobile|| mIsWaitingForScrollFinish) {
             mCellIsMobile = false;
@@ -429,7 +406,6 @@ public class DraggableListView extends ListView {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    LOGD(TAG, "onAnimationEnd()");
                     mAboveItemId = INVALID_ID;
                     mMobileItemId = INVALID_ID;
                     mBelowItemId = INVALID_ID;
@@ -513,10 +489,6 @@ public class DraggableListView extends ListView {
         }
 
         return false;
-    }
-
-    public void setCheeseList(ArrayList<String> cheeseList) {
-        mCheeseList = cheeseList;
     }
 
     /**
