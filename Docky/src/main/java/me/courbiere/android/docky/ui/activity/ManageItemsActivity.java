@@ -238,16 +238,19 @@ public class ManageItemsActivity extends FragmentActivity {
          */
         private void displayAppList() {
             final ActionBar actionBar = getActivity().getActionBar();
-            final int numItems = mDockItems.size() - 1;
 
-            if (numItems == 0) {
-                actionBar.setSubtitle(R.string.dock_empty);
-            } else {
-                final int stringId = numItems == 1
-                        ? R.string.manage_dock_items_subtitle_singular
-                        : R.string.manage_dock_items_subtitle_plural;
+            if (actionBar != null) {
+                final int numItems = mDockItems.size() - 1;
 
-                actionBar.setSubtitle(String.format(getString(stringId), numItems));
+                if (numItems == 0) {
+                    actionBar.setSubtitle(R.string.dock_empty);
+                } else {
+                    final int stringId = numItems == 1
+                            ? R.string.manage_dock_items_subtitle_singular
+                            : R.string.manage_dock_items_subtitle_plural;
+
+                    actionBar.setSubtitle(String.format(getString(stringId), numItems));
+                }
             }
 
             if (mLoader.getVisibility() != View.GONE) {
@@ -298,18 +301,14 @@ public class ManageItemsActivity extends FragmentActivity {
             Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
 
             if (apps != null) {
-                final int count = apps.size();
-
                 if (mApplications == null) {
-                    mApplications = new ArrayList<>(count);
+                    mApplications = new ArrayList<>(apps.size());
                 }
 
                 mApplications.clear();
 
-                for (int i = 0; i < count; i++) {
+                for (ResolveInfo info : apps) {
                     final AppInfo application = new AppInfo();
-                    final ResolveInfo info = apps.get(i);
-
                     application.title = info.loadLabel(manager);
 
                     application.setActivity(new ComponentName(
@@ -399,7 +398,7 @@ public class ManageItemsActivity extends FragmentActivity {
 
         @Override
         public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-            mDockItems = new HashSet<String>();
+            mDockItems = new HashSet<>();
             boolean displayAppList = false;
 
             cursor.moveToFirst();

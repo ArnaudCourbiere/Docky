@@ -9,6 +9,7 @@
     <ImageView
         android:id="@+id/app_icon"
         android:layout_width="@dimen/dock_item_width"
-        android:layout_height="@dimen/dock_item_height"/>
+        android:layout_height="@dimen/dock_item_height"
+        android:contentDescription="@string/app_icon"/>
 
 </LinearLayout>

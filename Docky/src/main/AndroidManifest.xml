@@ -4,14 +4,11 @@
     android:versionCode="10"
     android:versionName="0.1" >
 
-    <uses-sdk
-        android:minSdkVersion="15"
-        android:targetSdkVersion="19" />
-
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -67,7 +64,4 @@
             android:authorities="me.courbiere.android.docky.content.dockitems"
             android:exported="false" />
     </application>
-
-    <uses-permission android:name="android.permission.VIBRATE" />
-
 </manifest>

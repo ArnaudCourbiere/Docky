@@ -31,7 +31,7 @@ public class DockItemsContract {
         /**
          * This class cannot be instantiated.
          */
-        private DockItems() {};
+        private DockItems() {}
 
         /**
          * The content:// style URI for this table.

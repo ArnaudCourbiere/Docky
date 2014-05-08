@@ -33,6 +33,7 @@ public class GridItemArrayAdapter extends ArrayAdapter<AppInfo> {
         mLayoutResourceId = layoutResourceId;
         mDockItems = dockItems;
 
+        // TODO: Figure out what why I needed to to this.
         ContentResolver contentResolver = context.getContentResolver();
         Cursor cursor = contentResolver.query(DockItemsContract.DockItems.CONTENT_URI, null, null, null, null);
     }

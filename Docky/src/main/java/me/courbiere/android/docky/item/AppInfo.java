@@ -65,7 +65,7 @@ public class AppInfo implements Parcelable {
         AppInfo that = (AppInfo) o;
 
         return title.equals(that.title) &&
-                intent.getComponent().getClass().equals(
+                intent.getComponent().getClassName().equals(
                         that.intent.getComponent().getClassName());
     }
 

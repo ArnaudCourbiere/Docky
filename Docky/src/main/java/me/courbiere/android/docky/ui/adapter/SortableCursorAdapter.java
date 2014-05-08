@@ -117,7 +117,7 @@ public class SortableCursorAdapter extends SimpleCursorAdapter {
      * Removes unnecessary mappings from the sparse array.
      */
     private void cleanMapping() {
-        ArrayList<Integer> toRemove = new ArrayList<Integer>();
+        ArrayList<Integer> toRemove = new ArrayList<>();
 
         int size = mListMapping.size();
         for (int i = 0; i < size; ++i) {

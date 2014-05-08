@@ -6,5 +6,4 @@
     <color name="custom_button_border_focused">#ffe68700</color>
     <color name="custom_button_background_pressed">#ffe6c366</color>
     <color name="custom_button_border_pressed">#ffe68700</color>
-    <color name="custom_button_text">#ff743f00</color>
 </resources>

@@ -262,7 +262,7 @@ public class DockItemsProvider extends ContentProvider {
                     throw new UnsupportedOperationException("Unknown uri: " + uri);
             }
         } finally {
-            db.close();;
+            db.close();
         }
 
         this.getContext().getContentResolver().notifyChange(uri, null);
@@ -297,7 +297,7 @@ public class DockItemsProvider extends ContentProvider {
                     throw new UnsupportedOperationException("Unknown uri: " + uri);
             }
         } finally {
-            db.close();;
+            db.close();
         }
 
         this.getContext().getContentResolver().notifyChange(uri, null);

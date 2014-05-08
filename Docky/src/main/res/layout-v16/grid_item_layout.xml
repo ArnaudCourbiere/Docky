@@ -24,6 +24,7 @@
         android:ellipsize="marquee"
         android:gravity="center"
         android:textColor="@android:color/black"
-        android:textSize="14sp"/>
+        android:textSize="14sp"
+        android:fontFamily="sans-serif-condensed"/>
 
 </LinearLayout>
