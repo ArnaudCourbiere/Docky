@@ -71,7 +71,6 @@ public class SettingsActivity extends Activity {
 
                 return true;
 
-            case R.id.action_manage_items:
             case android.R.id.home:
                 final Intent upIntent = NavUtils.getParentActivityIntent(this);
                 final String action = getIntent().getAction();
