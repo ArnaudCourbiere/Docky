@@ -118,7 +118,7 @@ public class DbHelper extends SQLiteOpenHelper {
             db.insert(DockItemsContract.DockItems.TABLE_NAME, null, addValues);
         }
 
-        // Re-compact items positions starting at 1.
+        // Re-compact items positions starting at 0.
         if (oldVersion < 3 && newVersion >= 3) {
             final String[] projection = { DockItemsContract.DockItems._ID, };
             final String selection = DockItemsContract.DockItems.STICKY + " = ?";
@@ -135,7 +135,7 @@ public class DbHelper extends SQLiteOpenHelper {
             );
 
             cursor.moveToFirst();
-            int position = 1;
+            int position = 0;
 
             while (!cursor.isAfterLast()) {
                 final int id = cursor.getInt(cursor.getColumnIndex(DockItemsContract.DockItems._ID));

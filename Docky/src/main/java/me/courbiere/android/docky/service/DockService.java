@@ -24,8 +24,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
@@ -234,10 +232,10 @@ public class DockService extends Service {
             }
         });
 
-        mItemList.setOnItemDropListener(new DraggableListView.OnItemDropListener() {
+        mItemList.setOnItemDroppedListener(new DraggableListView.OnItemDroppedListener() {
             @Override
-            public void onItemDrop(int from, int to) {
-                LOGD(TAG, "Dropped from " + from + " to " + to);
+            public void onItemDropped(int from, int to, DraggableListView listView, View item) {
+                // TODO: Update db.
             }
         });
     }

@@ -33,8 +33,8 @@ import me.courbiere.android.docky.ui.adapter.SortableCursorAdapter;
 public class DraggableListView extends ListView {
     private static final String TAG = "DraggableListView";
 
-    private final int SMOOTH_SCROLL_AMOUNT_AT_EDGE = 45;
-    private final int MOVE_DURATION = 150;
+    private static final int SMOOTH_SCROLL_AMOUNT_AT_EDGE = 45;
+    private static final int MOVE_DURATION = 150;
 
     private int mLastEventY = -1;
 
@@ -47,23 +47,27 @@ public class DraggableListView extends ListView {
     private boolean mIsMobileScrolling = false;
     private int mSmoothScrollAmountAtEdge = 0;
 
-    private final int INVALID_ID = -1;
+    private static final int INVALID_ID = -1;
     private long mAboveItemId = INVALID_ID;
     private long mMobileItemId = INVALID_ID;
     private long mBelowItemId = INVALID_ID;
+
+    private static final int INVALID_POSITION = -1;
+    private int mStartPosition = INVALID_POSITION;
+    private int mEndPosition = INVALID_POSITION;
 
     private BitmapDrawable mHoverCell;
     private Rect mHoverCellCurrentBounds;
     private Rect mHoverCellOriginalBounds;
 
-    private final int INVALID_POINTER_ID = -1;
+    private static final int INVALID_POINTER_ID = -1;
     private int mActivePointerId = INVALID_POINTER_ID;
 
     private boolean mIsWaitingForScrollFinish = false;
     private int mScrollState = OnScrollListener.SCROLL_STATE_IDLE;
 
     private CompositeOnItemLongClickListener mCompositeOnItemLongClickListener;
-    private OnItemDropListener mOnItemDropListener;
+    private OnItemDroppedListener mOnItemDroppedListener;
 
     public DraggableListView(Context context) {
         super(context);
@@ -116,8 +120,8 @@ public class DraggableListView extends ListView {
      *
      * @param listener The callback to add.
      */
-    public void setOnItemDropListener(OnItemDropListener listener) {
-        mOnItemDropListener = listener;
+    public void setOnItemDroppedListener(OnItemDroppedListener listener) {
+        mOnItemDroppedListener = listener;
     }
 
     @Override
@@ -144,6 +148,7 @@ public class DraggableListView extends ListView {
 
                     View selectedView = getChildAt(itemNum);
                     mMobileItemId = getAdapter().getItemId(position);
+                    mStartPosition = getPositionForID(mMobileItemId);
 
                     mHoverCell = getAndAddHoverView(selectedView);
                     selectedView.setVisibility(INVISIBLE);
@@ -465,6 +470,7 @@ public class DraggableListView extends ListView {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
+                    mEndPosition = getPositionForID(mMobileItemId);
                     mAboveItemId = INVALID_ID;
                     mMobileItemId = INVALID_ID;
                     mBelowItemId = INVALID_ID;
@@ -473,9 +479,13 @@ public class DraggableListView extends ListView {
                     setEnabled(true);
                     invalidate();
 
-                    if (mOnItemDropListener != null) {
-                        mOnItemDropListener.onItemDrop(0, 0);
+                    if (mOnItemDroppedListener != null) {
+                        mOnItemDroppedListener.onItemDropped(
+                                mStartPosition, mEndPosition, DraggableListView.this, mobileView);
                     }
+
+                    mStartPosition = INVALID_POSITION;
+                    mEndPosition = INVALID_POSITION;
                 }
             });
             hoverViewAnimator.start();
@@ -493,6 +503,8 @@ public class DraggableListView extends ListView {
             mAboveItemId = INVALID_ID;
             mMobileItemId = INVALID_ID;
             mBelowItemId = INVALID_ID;
+            mStartPosition = INVALID_POSITION;
+            mEndPosition = INVALID_POSITION;
             mobileView.setVisibility(VISIBLE);
             mHoverCell = null;
             invalidate();
@@ -686,34 +698,22 @@ public class DraggableListView extends ListView {
      * Interface definition for a callback to be invoked when an item in this
      * view has been dropped after being dragged.
      */
-    public interface OnItemDropListener {
-        /*
-         * Callback method to be invoked when an item in this view has been
-         * clicked and held.
-         *
-         * Implementers can call getItemAtPosition(position) if they need to access
-         * the data associated with the selected item.
-         *
-         * @param parent The AbsListView where the click happened
-         * @param view The view within the AbsListView that was clicked
-         * @param position The position of the view in the list
-         * @param id The row id of the item that was clicked
-         *
-         * @return true if the callback consumed the long click, false otherwise
-         */
-
+    public interface OnItemDroppedListener {
         /**
          * Callback method to be invoked when an item in this DraggableListView has been
          * dropped after being dragged.
          *
          * Implementers can call getItemAtPosition(from or to) if they need to access
          * the data associated with the selected item.
-         * TODO: Specify if "from" or "to" need to be used to retrieve item.
+         * Note: The callback is invoked after the item has been dropped and list re-organized. This
+         * means that the item is already in the "to" position.
          *
          * @param from Item's initial position.
          * @param to Item's final position.
+         * @param listView The DraggableListView.
+         * @param item The item that was dropped.
          */
-        public void onItemDrop(int from, int to); // TODO: Consider passing the ListView, the View dropped and the row id.
+        public void onItemDropped(int from, int to, DraggableListView listView, View item);
     }
 
     public interface SortableAdapter {
