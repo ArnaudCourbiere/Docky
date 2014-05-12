@@ -19,6 +19,7 @@ import android.view.ViewTreeObserver;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import java.util.LinkedList;
@@ -27,7 +28,7 @@ import java.util.List;
 import me.courbiere.android.docky.ui.adapter.SortableCursorAdapter;
 
 /**
- * ListView whose items can be reorder by drag and drop.
+ * ListView whose items can be reordered by drag and drop.
  */
 public class DraggableListView extends ListView {
     private static final String TAG = "DraggableListView";
@@ -62,6 +63,7 @@ public class DraggableListView extends ListView {
     private int mScrollState = OnScrollListener.SCROLL_STATE_IDLE;
 
     private CompositeOnItemLongClickListener mCompositeOnItemLongClickListener;
+    private OnItemDropListener mOnItemDropListener;
 
     public DraggableListView(Context context) {
         super(context);
@@ -82,18 +84,50 @@ public class DraggableListView extends ListView {
         mCompositeOnItemLongClickListener = new CompositeOnItemLongClickListener();
         setOnItemLongClickListener(mCompositeOnItemLongClickListener);
 
-        registerOnItemLongClickListener(mOnItemLongClickListener);
+        addOnItemLongClickListener(mOnItemLongClickListener);
         setOnScrollListener(mScrollListener);
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         mSmoothScrollAmountAtEdge = (int)(SMOOTH_SCROLL_AMOUNT_AT_EDGE / metrics.density);
     }
 
-    public void registerOnItemLongClickListener(OnItemLongClickListener listener) {
+    /**
+     * Add a callback to be invoked when an item in this DraggableListView has
+     * been clicked and held.
+     *
+     * @param listener The callback to add.
+     */
+    public void addOnItemLongClickListener(OnItemLongClickListener listener) {
         mCompositeOnItemLongClickListener.addOnItemLongClickListener(listener);
     }
 
-    public void unregisterOnItemLongClickListener(OnItemLongClickListener listener) {
+    /**
+     * Remove a callback from the list of callbacks to be invoked when an item in this
+     * DraggableListView has been clicked and held.
+     *
+     * @param listener The callback to remove.
+     */
+    public void removeOnItemLongClickListener(OnItemLongClickListener listener) {
         mCompositeOnItemLongClickListener.removeOnItemLongClickListener(listener);
+    }
+
+    /**
+     * Register a callback to be invoked when an item in this DraggableListView has been
+     * dropped after being dragged.
+     *
+     * @param listener The callback to add.
+     */
+    public void setOnItemDropListener(OnItemDropListener listener) {
+        mOnItemDropListener = listener;
+    }
+
+    @Override
+    public void setAdapter(ListAdapter adapter) {
+        if (!(adapter instanceof SortableAdapter)) {
+            throw new IllegalArgumentException(
+                    "Adapter must implement the SortableAdapter interface.");
+        }
+
+        super.setAdapter(adapter);
     }
 
     /**
@@ -134,7 +168,7 @@ public class DraggableListView extends ListView {
         int top = v.getTop();
         int left = v.getLeft();
 
-        Bitmap b = getBitmapWithBorder(v);
+        Bitmap b = getBitmapWithTransparency(v);
 
         BitmapDrawable drawable = new BitmapDrawable(getResources(), b);
 
@@ -146,8 +180,13 @@ public class DraggableListView extends ListView {
         return drawable;
     }
 
-    /** Draws a black border over the screenshot of the view passed in. */
-    private Bitmap getBitmapWithBorder(View v) {
+    /**
+     * Apply a transparency effect to the screenshot of the view passed in.
+     *
+     * @param v The View to capture and to apply transparency to.
+     * @return The screenshot of the View with a transparency effect.
+     */
+    private Bitmap getBitmapWithTransparency(View v) {
         Bitmap bitmap = getBitmapFromView(v);
 
         if (!bitmap.isMutable()) {
@@ -159,6 +198,8 @@ public class DraggableListView extends ListView {
         canvas.drawColor(color, PorterDuff.Mode.DST_IN);
 
         return bitmap;
+
+        // Original implementation from the Android example project was adding a black border.
         /*
         Bitmap bitmap = getBitmapFromView(v);
         Canvas can = new Canvas(bitmap);
@@ -177,7 +218,12 @@ public class DraggableListView extends ListView {
         */
     }
 
-    /** Returns a bitmap showing a screenshot of the view passed in. */
+    /**
+     * Returns a bitmap showing a screenshot of the view passed in.
+     *
+     * @param v The view to capture.
+     * @return The bitmap screenshot.
+     */
     private Bitmap getBitmapFromView(View v) {
         Bitmap bitmap = Bitmap.createBitmap(v.getWidth(), v.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas (bitmap);
@@ -190,6 +236,8 @@ public class DraggableListView extends ListView {
      * corresponding to the hover cell. It is important to note that if this
      * item is either at the top or bottom of the list, mAboveItemId or mBelowItemId
      * may be invalid.
+     *
+     * @param itemID ID of the item currently dragged.
      */
     private void updateNeighborViewsForID(long itemID) {
         int position = getPositionForID(itemID);
@@ -198,7 +246,12 @@ public class DraggableListView extends ListView {
         mBelowItemId = adapter.getItemId(position + 1);
     }
 
-    /** Retrieves the view in the list corresponding to itemID */
+    /**
+     * Retrieves the view in the list corresponding to itemID.
+     *
+     * @param itemID itemID for which to get the View.
+     * @return View corresponding to the itemID or null if none is found.
+     */
     public View getViewForID (long itemID) {
         int firstVisiblePosition = getFirstVisiblePosition();
         CursorAdapter adapter = (CursorAdapter) getAdapter();
@@ -214,7 +267,12 @@ public class DraggableListView extends ListView {
         return null;
     }
 
-    /** Retrieves the position in the list corresponding to itemID */
+    /**
+     * Retrieves the position in the list corresponding to itemID.
+     *
+     * @param itemID itemID for which to get the position.
+     * @return Position corresponding to the itemID or -1 if none is found.
+     */
     public int getPositionForID (long itemID) {
         View v = getViewForID(itemID);
         if (v == null) {
@@ -225,9 +283,11 @@ public class DraggableListView extends ListView {
     }
 
     /**
-     *  dispatchDraw gets invoked when all the child views are about to be drawn.
-     *  By overriding this method, the hover cell (BitmapDrawable) can be drawn
-     *  over the listview's items whenever the listview is redrawn.
+     * dispatchDraw gets invoked when all the child views are about to be drawn.
+     * By overriding this method, the hover cell (BitmapDrawable) can be drawn
+     * over the listview's items whenever the listview is redrawn.
+     *
+     * @param canvas The canvas on which to draw the View.
      */
     @Override
     protected void dispatchDraw(Canvas canvas) {
@@ -330,8 +390,7 @@ public class DraggableListView extends ListView {
 
             adapter.swap(originalItem, getPositionForView(switchView));
 
-            // Force children to be re-computed.
-            // This is necessary because for some reason, the adapter swap doesn't cause onLayout to be called.
+            // Force the ListView to layout children right away (prevents flicker when switching).
             layoutChildren();
 
             mDownY = mLastEventY;
@@ -413,6 +472,10 @@ public class DraggableListView extends ListView {
                     mHoverCell = null;
                     setEnabled(true);
                     invalidate();
+
+                    if (mOnItemDropListener != null) {
+                        mOnItemDropListener.onItemDrop(0, 0);
+                    }
                 }
             });
             hoverViewAnimator.start();
@@ -458,8 +521,8 @@ public class DraggableListView extends ListView {
     };
 
     /**
-     *  Determines whether this listview is in a scrolling state invoked
-     *  by the fact that the hover cell is out of the bounds of the listview;
+     * Determines whether this listview is in a scrolling state invoked
+     * by the fact that the hover cell is out of the bounds of the listview;
      */
     private void handleMobileCellScroll() {
         mIsMobileScrolling = handleMobileCellScroll(mHoverCellCurrentBounds);
@@ -577,6 +640,10 @@ public class DraggableListView extends ListView {
         }
     };
 
+    /**
+     * Composite item long click listener used to register multiple
+     * OnItemLongClickListener on the same ListView.
+     */
     private class CompositeOnItemLongClickListener implements OnItemLongClickListener {
         private List<OnItemLongClickListener> mListeners = new LinkedList<>();
 
@@ -595,10 +662,10 @@ public class DraggableListView extends ListView {
          * Implementers can call getItemAtPosition(position) if they need to access
          * the data associated with the selected item.
          *
-         * @param parent   The AbsListView where the click happened
-         * @param view     The view within the AbsListView that was clicked
+         * @param parent The AbsListView where the click happened
+         * @param view The view within the AbsListView that was clicked
          * @param position The position of the view in the list
-         * @param id       The row id of the item that was clicked
+         * @param id The row id of the item that was clicked
          * @return true if the callback consumed the long click, false otherwise
          */
         @Override
@@ -613,5 +680,43 @@ public class DraggableListView extends ListView {
 
             return false;
         }
+    }
+
+    /**
+     * Interface definition for a callback to be invoked when an item in this
+     * view has been dropped after being dragged.
+     */
+    public interface OnItemDropListener {
+        /*
+         * Callback method to be invoked when an item in this view has been
+         * clicked and held.
+         *
+         * Implementers can call getItemAtPosition(position) if they need to access
+         * the data associated with the selected item.
+         *
+         * @param parent The AbsListView where the click happened
+         * @param view The view within the AbsListView that was clicked
+         * @param position The position of the view in the list
+         * @param id The row id of the item that was clicked
+         *
+         * @return true if the callback consumed the long click, false otherwise
+         */
+
+        /**
+         * Callback method to be invoked when an item in this DraggableListView has been
+         * dropped after being dragged.
+         *
+         * Implementers can call getItemAtPosition(from or to) if they need to access
+         * the data associated with the selected item.
+         * TODO: Specify if "from" or "to" need to be used to retrieve item.
+         *
+         * @param from Item's initial position.
+         * @param to Item's final position.
+         */
+        public void onItemDrop(int from, int to); // TODO: Consider passing the ListView, the View dropped and the row id.
+    }
+
+    public interface SortableAdapter {
+        void swap(int from, int to);
     }
 }

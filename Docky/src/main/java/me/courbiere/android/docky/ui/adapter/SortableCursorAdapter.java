@@ -9,12 +9,16 @@ import android.widget.SimpleCursorAdapter;
 
 import java.util.ArrayList;
 
+import me.courbiere.android.docky.ui.view.DraggableListView;
+
 import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * Sortable CursorAdapter. Used for the drag and drop list view.
  */
-public class SortableCursorAdapter extends SimpleCursorAdapter {
+public class SortableCursorAdapter
+        extends SimpleCursorAdapter implements DraggableListView.SortableAdapter {
+
     private static final String TAG = "SortableCursorAdapter";
 
     /**
@@ -92,6 +96,7 @@ public class SortableCursorAdapter extends SimpleCursorAdapter {
      * @param from First item's position.
      * @param to Second item's position.
      */
+    @Override
     public void swap(int from, int to) {
         if (from != to) {
             int cursorFrom = mListMapping.get(from, from);

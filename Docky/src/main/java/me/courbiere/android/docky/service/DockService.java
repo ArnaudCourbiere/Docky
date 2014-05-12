@@ -26,6 +26,7 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
@@ -38,6 +39,9 @@ import me.courbiere.android.docky.ui.activity.ManageItemsActivity;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
 import me.courbiere.android.docky.ui.adapter.SortableCursorAdapter;
 import me.courbiere.android.docky.ui.view.DockLayout;
+import me.courbiere.android.docky.ui.view.DraggableListView;
+
+import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * Attaches the DockLayout to the window.
@@ -60,12 +64,12 @@ public class DockService extends Service {
     /**
      * Dock.
      */
-    private LinearLayout mDock;
+    private RelativeLayout mDock;
 
     /**
      * Dock item list
      */
-    private ListView mItemList;
+    private DraggableListView mItemList;
 
     /**
      * Adapter used to display the dock items.
@@ -155,8 +159,8 @@ public class DockService extends Service {
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 
         mDockLayout = (DockLayout) inflater.inflate(R.layout.dock_layout, null);
-        mDock = (LinearLayout) mDockLayout.findViewById(R.id.dock);
-        mItemList = (ListView) mDockLayout.findViewById(R.id.dock_item_list);
+        mDock = (RelativeLayout) mDockLayout.findViewById(R.id.dock);
+        mItemList = (DraggableListView) mDockLayout.findViewById(R.id.dock_item_list);
 
         final String[] from = new String[] {DockItemsContract.DockItems.ICON };
         final int[] to = new int[] { R.id.app_icon };
@@ -227,6 +231,13 @@ public class DockService extends Service {
                 } catch (URISyntaxException e) {
 
                 }
+            }
+        });
+
+        mItemList.setOnItemDropListener(new DraggableListView.OnItemDropListener() {
+            @Override
+            public void onItemDrop(int from, int to) {
+                LOGD(TAG, "Dropped from " + from + " to " + to);
             }
         });
     }

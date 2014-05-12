@@ -241,7 +241,7 @@ public class DockLayout extends RelativeLayout {
         super.onAttachedToWindow();
         PreferenceManager.getDefaultSharedPreferences(getContext())
                 .registerOnSharedPreferenceChangeListener(mPreferenceChangeListener);
-        mDockItems.registerOnItemLongClickListener(mItemLongClickListener);
+        mDockItems.addOnItemLongClickListener(mItemLongClickListener);
     }
 
     @Override
@@ -249,7 +249,7 @@ public class DockLayout extends RelativeLayout {
         super.onDetachedFromWindow();
         PreferenceManager.getDefaultSharedPreferences(getContext())
                 .unregisterOnSharedPreferenceChangeListener(mPreferenceChangeListener);
-        mDockItems.unregisterOnItemLongClickListener(mItemLongClickListener);
+        mDockItems.removeOnItemLongClickListener(mItemLongClickListener);
     }
 
     /*

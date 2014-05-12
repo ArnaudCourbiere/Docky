@@ -4,6 +4,7 @@ import android.app.ActivityManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
@@ -25,7 +26,7 @@ public class DbHelper extends SQLiteOpenHelper {
     /**
      * Database version.
      */
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
 
     /**
      * Database name.
@@ -115,6 +116,39 @@ public class DbHelper extends SQLiteOpenHelper {
             addValues.put(DockItemsContract.DockItems.POSITION, position);
             addValues.put(DockItemsContract.DockItems.STICKY, true);
             db.insert(DockItemsContract.DockItems.TABLE_NAME, null, addValues);
+        }
+
+        // Re-compact items positions starting at 1.
+        if (oldVersion < 3 && newVersion >= 3) {
+            final String[] projection = { DockItemsContract.DockItems._ID, };
+            final String selection = DockItemsContract.DockItems.STICKY + " = ?";
+            final String[] selectionArgs = { "0" };
+
+            Cursor cursor = db.query(
+                    DockItemsContract.DockItems.TABLE_NAME,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    null
+            );
+
+            cursor.moveToFirst();
+            int position = 0;
+
+            while (!cursor.isAfterLast()) {
+                final int id = cursor.getInt(cursor.getColumnIndex(DockItemsContract.DockItems._ID));
+                final ContentValues values = new ContentValues();
+                final String where = DockItemsContract.DockItems._ID + " = ?";
+                final String[] whereArgs = { Integer.toString(id)};
+
+                values.put(DockItemsContract.DockItems.POSITION, position);
+                db.update(DockItemsContract.DockItems.TABLE_NAME, values, where, whereArgs);
+
+                position++;
+                cursor.moveToNext();
+            }
         }
     }
 

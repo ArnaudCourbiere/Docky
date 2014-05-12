@@ -47,13 +47,15 @@ import me.courbiere.android.docky.service.DockService;
 import me.courbiere.android.docky.ui.adapter.GridItemArrayAdapter;
 import me.courbiere.android.docky.util.ImageUtils;
 
-import static me.courbiere.android.docky.util.LogUtils.*;
-
 /**
  * Allowing user to manage items that appear in the dock.
  */
 public class ManageItemsActivity extends FragmentActivity {
     private static final String TAG = "ManageItemsActivity";
+
+    private static final int TOKEN_QUERY_MAX_POSITION_FOR_INSERT = 0;
+    private static final int TOKEN_INSERT_ITEM = 1;
+    private static final int TOKEN_DELETE_ITEM = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,7 +178,7 @@ public class ManageItemsActivity extends FragmentActivity {
                     final AppInfo appInfo = mApplications.get(position);
                     final String intentUri = appInfo.intent.toUri(0);
                     final ContentResolver contentResolver = getActivity().getContentResolver();
-                    final AsyncQueryHandler asyncQueryHandler = new AsyncQueryHandler(contentResolver) {};
+                    final AsyncQueryHandler asyncQueryHandler = new ItemQueryHandler(contentResolver);
 
                     if (mAppGrid.isItemChecked(position)) {
                         final Bitmap bitmapIcon = ImageUtils.createIconBitmap(getActivity(), appInfo.icon);
@@ -186,19 +188,26 @@ public class ManageItemsActivity extends FragmentActivity {
                         values.put(DockItemsContract.DockItems.TITLE, appInfo.title.toString());
                         values.put(DockItemsContract.DockItems.INTENT, intentUri);
                         values.put(DockItemsContract.DockItems.ICON, flattenedIcon);
-                        //values.put(DockItemsContract.DockItems.POSITION, position);
 
-                        asyncQueryHandler.startInsert(
-                                0,
-                                null,
+                        final String[] projection = { "MAX("
+                                + DockItemsContract.DockItems.POSITION + ") as maxPosition" };
+                        final String selection = DockItemsContract.DockItems.STICKY + " = ?";
+                        final String[] selectionArgs = { "0" };
+
+                        asyncQueryHandler.startQuery(
+                                TOKEN_QUERY_MAX_POSITION_FOR_INSERT,
+                                values,
                                 DockItemsContract.DockItems.CONTENT_URI,
-                                values);
+                                projection,
+                                selection,
+                                selectionArgs,
+                                null);
                     } else {
                         final String where = DockItemsContract.DockItems.INTENT + " = ?";
                         final String[] selectionArgs = { intentUri };
 
                         asyncQueryHandler.startDelete(
-                                0,
+                                TOKEN_DELETE_ITEM,
                                 null,
                                 DockItemsContract.DockItems.CONTENT_URI,
                                 where,
@@ -426,6 +435,41 @@ public class ManageItemsActivity extends FragmentActivity {
         @Override
         public void onLoaderReset(Loader<Cursor> cursorLoader) {
             mDockItems.clear();
+        }
+
+        /**
+         * AsyncQueryHandler to handle inserts after querying the max position index of current
+         * dock items.
+         */
+        private class ItemQueryHandler extends AsyncQueryHandler {
+            public ItemQueryHandler(ContentResolver cr) {
+                super(cr);
+            }
+
+            @Override
+            protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
+                switch (token) {
+
+                    // Set the position to maxPosition + 1 and insert the supplied values.
+                    case TOKEN_QUERY_MAX_POSITION_FOR_INSERT:
+                        if (cookie == null) {
+                            throw new IllegalArgumentException(
+                                    "The values to insert must be passed as the cookie to the query operation");
+                        }
+
+                        cursor.moveToFirst();
+                        final int maxPosition = cursor.getInt(cursor.getColumnIndex("maxPosition"));
+                        final ContentValues values = (ContentValues) cookie;
+                        values.put(DockItemsContract.DockItems.POSITION, maxPosition + 1);
+
+                        startInsert(
+                                TOKEN_INSERT_ITEM,
+                                null,
+                                DockItemsContract.DockItems.CONTENT_URI,
+                                values);
+                        break;
+                }
+            }
         }
     }
 }
