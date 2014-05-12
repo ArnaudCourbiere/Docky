@@ -135,7 +135,7 @@ public class DbHelper extends SQLiteOpenHelper {
             );
 
             cursor.moveToFirst();
-            int position = 0;
+            int position = 1;
 
             while (!cursor.isAfterLast()) {
                 final int id = cursor.getInt(cursor.getColumnIndex(DockItemsContract.DockItems._ID));
