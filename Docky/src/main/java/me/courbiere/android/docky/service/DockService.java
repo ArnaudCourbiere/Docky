@@ -35,9 +35,9 @@ import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.provider.DockItemsContract;
 import me.courbiere.android.docky.ui.activity.ManageItemsActivity;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
-import me.courbiere.android.docky.ui.adapter.SortableCursorAdapter;
 import me.courbiere.android.docky.ui.view.DockLayout;
-import me.courbiere.android.docky.ui.view.DraggableListView;
+import me.courbiere.android.draganddroplistview.DragAndDropListView;
+import me.courbiere.android.draganddroplistview.SortableSimpleCursorAdapter;
 
 import static me.courbiere.android.docky.util.LogUtils.*;
 
@@ -67,12 +67,12 @@ public class DockService extends Service {
     /**
      * Dock item list
      */
-    private DraggableListView mItemList;
+    private DragAndDropListView mItemList;
 
     /**
      * Adapter used to display the dock items.
      */
-    private SimpleCursorAdapter mItemsAdapter;
+    private SortableSimpleCursorAdapter mItemsAdapter;
 
     /**
      * Cursor used with the SimpleCursorAdapter.
@@ -158,20 +158,20 @@ public class DockService extends Service {
 
         mDockLayout = (DockLayout) inflater.inflate(R.layout.dock_layout, null);
         mDock = (RelativeLayout) mDockLayout.findViewById(R.id.dock);
-        mItemList = (DraggableListView) mDockLayout.findViewById(R.id.dock_item_list);
+        mItemList = (DragAndDropListView) mDockLayout.findViewById(R.id.dock_item_list);
 
         final String[] from = new String[] {DockItemsContract.DockItems.ICON };
         final int[] to = new int[] { R.id.app_icon };
 
         mCursor = getContentResolver().query(DockItemsContract.DockItems.CONTENT_URI,
                 DOCK_ITEM_PROJECTION, null, null, DockItemsContract.DockItems.POSITION + " ASC");
-        mItemsAdapter = new SortableCursorAdapter(getBaseContext(), R.layout.dock_item_layout,
+        mItemsAdapter = new SortableSimpleCursorAdapter(getBaseContext(), R.layout.dock_item_layout,
                 mCursor, from, to, 0);
 
         // TODO: Improvement: use the holder pattern.
 
         // Use custom binder.
-        final SimpleCursorAdapter.ViewBinder binder = new DockItemViewBinder();
+        final SortableSimpleCursorAdapter.ViewBinder binder = new DockItemViewBinder();
 
         mItemsAdapter.setViewBinder(binder);
         mItemList.setAdapter(mItemsAdapter);
@@ -232,9 +232,9 @@ public class DockService extends Service {
             }
         });
 
-        mItemList.setOnItemDroppedListener(new DraggableListView.OnItemDroppedListener() {
+        mItemList.setOnItemDroppedListener(new DragAndDropListView.OnItemDroppedListener() {
             @Override
-            public void onItemDropped(int from, int to, DraggableListView listView, View item) {
+            public void onItemDropped(int from, int to, DragAndDropListView listView, View item) {
                 // TODO: Update db.
             }
         });
@@ -300,7 +300,7 @@ public class DockService extends Service {
     /**
      * Custom ViewBinder used to set the icon of the dock items.
      */
-    private class DockItemViewBinder implements SimpleCursorAdapter.ViewBinder {
+    private class DockItemViewBinder implements SortableSimpleCursorAdapter.ViewBinder {
 
         /**
          * Icon cache.

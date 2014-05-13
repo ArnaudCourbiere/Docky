@@ -21,6 +21,7 @@ import android.widget.RelativeLayout;
 
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
+import me.courbiere.android.draganddroplistview.DragAndDropListView;
 
 /**
  * Dock Layout. This View is responsible for managing the dock positioning, it sits on top of every
@@ -102,7 +103,7 @@ public class DockLayout extends RelativeLayout {
     /**
      * Dock Items list.
      */
-    private DraggableListView mDockItems;
+    private DragAndDropListView mDockItems;
 
     /**
      * Window Manager. Needed to attach the DockLayout to the window (on top of every other window)
@@ -193,7 +194,7 @@ public class DockLayout extends RelativeLayout {
      */
     public void attachToWindow() {
         mDock = findViewById(R.id.dock);
-        mDockItems = (DraggableListView) findViewById(R.id.dock_item_list);
+        mDockItems = (DragAndDropListView) findViewById(R.id.dock_item_list);
         setDockBackground(PreferenceManager.getDefaultSharedPreferences(getContext()));
 
         final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(

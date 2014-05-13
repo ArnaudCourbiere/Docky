@@ -1,0 +1,3 @@
+[submodule "DragAndDropListView"]
+	path = DragAndDropListView
+	url = git@github.com:ArnaudCourbiere/DragAndDropListView.git
