@@ -4,6 +4,7 @@ import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentProviderOperation;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
@@ -29,6 +30,7 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import me.courbiere.android.docky.R;
@@ -235,7 +237,29 @@ public class DockService extends Service {
         mItemList.setOnItemDroppedListener(new DragAndDropListView.OnItemDroppedListener() {
             @Override
             public void onItemDropped(int from, int to, DragAndDropListView listView, View item) {
-                // TODO: Update db.
+                if (from == to) {
+                    return;
+                }
+
+                final ArrayList<ContentProviderOperation>
+                        updates = new ArrayList<>(Math.abs(from - to));
+                final int start = Math.min(from, to);
+                final int end = Math.max(from, to);
+
+                final boolean success = mCursor.moveToPosition(start);
+
+                if (!success) {
+                    throw new RuntimeException("Unable to move cursor to position " + from);
+                }
+
+                while (mCursor.getPosition() <= end) {
+                    final int itemId = mCursor.getInt(
+                            mCursor.getColumnIndex(DockItemsContract.DockItems._ID));
+                    final String itemName = mCursor.getString(
+                            mCursor.getColumnIndex(DockItemsContract.DockItems.TITLE));
+
+                    mCursor.moveToNext();
+                }
             }
         });
     }
