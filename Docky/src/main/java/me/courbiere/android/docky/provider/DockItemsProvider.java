@@ -14,8 +14,6 @@ import android.text.TextUtils;
 
 import me.courbiere.android.docky.sql.DbHelper;
 
-import static me.courbiere.android.docky.util.LogUtils.*;
-
 /**
  * Dock Item Content Provider.
  *
@@ -125,7 +123,7 @@ public class DockItemsProvider extends ContentProvider {
 
         // Use default projection if none is supplied.
         if (projection == null) {
-            projection = this.getDefaultProjection(uri);
+            projection = getDefaultProjection(uri);
         }
 
         // Use default sort order if non is supplied.
@@ -189,7 +187,7 @@ public class DockItemsProvider extends ContentProvider {
             db.close();
         }
 
-        this.getContext().getContentResolver().notifyChange(uri, null);
+        getContext().getContentResolver().notifyChange(uri, null);
 
         return insertUri;
     }
@@ -211,12 +209,18 @@ public class DockItemsProvider extends ContentProvider {
      */
     @Override
     public int bulkInsert(Uri uri, ContentValues[] values) {
+        final String tableName = getTable(uri);
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         db.beginTransaction();
 
         try {
             for (ContentValues value : values) {
-                insert(uri, value);
+                final long newId = db.insertOrThrow(tableName, null, value);
+
+                if (newId < 0) {
+                    // Can't throw a checked exception because the parent method doesn't throw one.
+                    throw new RuntimeException("Failed to insert row into " + uri.toString());
+                }
             }
             db.setTransactionSuccessful();
         } finally {
@@ -224,7 +228,7 @@ public class DockItemsProvider extends ContentProvider {
             db.close();
         }
 
-        this.getContext().getContentResolver().notifyChange(uri, null);
+        getContext().getContentResolver().notifyChange(uri, null);
 
         return values.length;
     }
@@ -265,7 +269,7 @@ public class DockItemsProvider extends ContentProvider {
             db.close();
         }
 
-        this.getContext().getContentResolver().notifyChange(uri, null);
+        getContext().getContentResolver().notifyChange(uri, null);
 
         return rowsAffected;
     }
@@ -300,7 +304,7 @@ public class DockItemsProvider extends ContentProvider {
             db.close();
         }
 
-        this.getContext().getContentResolver().notifyChange(uri, null);
+        getContext().getContentResolver().notifyChange(uri, null);
 
         return rowsAffected;
     }
