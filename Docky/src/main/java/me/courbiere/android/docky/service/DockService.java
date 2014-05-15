@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentProviderOperation;
 import android.content.Intent;
+import android.content.OperationApplicationException;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -16,6 +17,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.NotificationCompat;
@@ -54,6 +56,7 @@ public class DockService extends Service {
             DockItemsContract.DockItems.INTENT,
             DockItemsContract.DockItems.TITLE,
             DockItemsContract.DockItems.ICON,
+            DockItemsContract.DockItems.POSITION,
             DockItemsContract.DockItems.STICKY };
 
     /**
@@ -243,22 +246,57 @@ public class DockService extends Service {
 
                 final ArrayList<ContentProviderOperation>
                         updates = new ArrayList<>(Math.abs(from - to));
-                final int start = Math.min(from, to);
-                final int end = Math.max(from, to);
+                final int idColIndex = mCursor.getColumnIndex(
+                        DockItemsContract.DockItems._ID);
+                final int positionColIndex = mCursor.getColumnIndex(
+                        DockItemsContract.DockItems.POSITION);
 
-                final boolean success = mCursor.moveToPosition(start);
+                mCursor.moveToPosition(from);
+                final int fromId = mCursor.getInt(idColIndex);
+                final int fromPosition = mCursor.getInt(positionColIndex);
+                mCursor.moveToPosition(to);
+                final int toPosition = mCursor.getInt(positionColIndex);
 
-                if (!success) {
-                    throw new RuntimeException("Unable to move cursor to position " + from);
+                final String selection = DockItemsContract.DockItems._ID + " = ?";
+                final String[] selectionArgs = { Integer.toString(fromId) };
+                updates.add(
+                        ContentProviderOperation.newUpdate(DockItemsContract.DockItems.CONTENT_URI)
+                                .withSelection(selection, selectionArgs)
+                                .withValue(DockItemsContract.DockItems.POSITION, toPosition)
+                                .build());
+
+                if (from < to) {
+                    mCursor.moveToPosition(from + 1);
+                } else {
+                    mCursor.moveToPosition(from - 1);
                 }
 
-                while (mCursor.getPosition() <= end) {
-                    final int itemId = mCursor.getInt(
-                            mCursor.getColumnIndex(DockItemsContract.DockItems._ID));
-                    final String itemName = mCursor.getString(
-                            mCursor.getColumnIndex(DockItemsContract.DockItems.TITLE));
+                int previousPosition = fromPosition;
+                if (from < to) {
+                    while (mCursor.getPosition() <= to) {
+                        int itemId = mCursor.getInt(idColIndex);
+                        selectionArgs[0] = Integer.toString(itemId);
+                        updates.add(
+                                ContentProviderOperation.newUpdate(DockItemsContract.DockItems.CONTENT_URI)
+                                        .withSelection(selection, selectionArgs)
+                                        .withValue(DockItemsContract.DockItems.POSITION, previousPosition)
+                                        .build());
 
-                    mCursor.moveToNext();
+                        previousPosition = mCursor.getInt(positionColIndex);
+                        mCursor.moveToNext();
+                    }
+                } else {
+                    while (mCursor.getPosition() >= to) {
+                        mCursor.moveToPrevious();
+                    }
+                }
+
+                try {
+                    getContentResolver().applyBatch(DockItemsContract.AUTHORITY, updates);
+                } catch (RemoteException e) {
+                    LOGE(TAG, e.toString(), e);
+                } catch (OperationApplicationException e) {
+                    LOGE(TAG, e.toString(), e);
                 }
             }
         });
