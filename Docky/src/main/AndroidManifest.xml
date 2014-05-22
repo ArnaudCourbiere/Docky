@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.courbiere.android.docky"
-    android:versionCode="11"
+    android:versionCode="12"
     android:versionName="0.2" >
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
