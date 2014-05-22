@@ -244,6 +244,7 @@ public class DockService extends Service {
                     return;
                 }
 
+                // TODO: Rework this function. Make it less messy, more pretty.
                 final ArrayList<ContentProviderOperation>
                         updates = new ArrayList<>(Math.abs(from - to));
                 final int idColIndex = mCursor.getColumnIndex(
@@ -287,6 +288,15 @@ public class DockService extends Service {
                     }
                 } else {
                     while (mCursor.getPosition() >= to) {
+                        int itemId = mCursor.getInt(idColIndex);
+                        selectionArgs[0] = Integer.toString(itemId);
+                        updates.add(
+                                ContentProviderOperation.newUpdate(DockItemsContract.DockItems.CONTENT_URI)
+                                        .withSelection(selection, selectionArgs)
+                                        .withValue(DockItemsContract.DockItems.POSITION, previousPosition)
+                                        .build());
+
+                        previousPosition = mCursor.getInt(positionColIndex);
                         mCursor.moveToPrevious();
                     }
                 }
@@ -295,8 +305,18 @@ public class DockService extends Service {
                     getContentResolver().applyBatch(DockItemsContract.AUTHORITY, updates);
                 } catch (RemoteException e) {
                     LOGE(TAG, e.toString(), e);
+                    Toast.makeText(
+                            DockService.this,
+                            DockService.this.getString(R.string.error_cannot_update_dock),
+                            Toast.LENGTH_SHORT)
+                            .show();
                 } catch (OperationApplicationException e) {
                     LOGE(TAG, e.toString(), e);
+                    Toast.makeText(
+                            DockService.this,
+                            DockService.this.getString(R.string.error_cannot_update_dock),
+                            Toast.LENGTH_SHORT)
+                            .show();
                 }
             }
         });

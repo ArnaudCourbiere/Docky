@@ -20,4 +20,6 @@
     <string name="dock_empty">dock empty</string>
     <string name="app_icon">Application Icon</string>
 
+    <string name="error_cannot_update_dock">Error, unable to update dock</string>
+
 </resources>
