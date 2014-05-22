@@ -23,6 +23,8 @@ import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
 import me.courbiere.android.draganddroplistview.DragAndDropListView;
 
+import static me.courbiere.android.docky.util.LogUtils.*;
+
 /**
  * Dock Layout. This View is responsible for managing the dock positioning, it sits on top of every
  * other window. This View is intercepting motion events and determines if the motion events
@@ -263,11 +265,7 @@ public class DockLayout extends RelativeLayout {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        if (!changed) {
-            return;
-        }
-
-        if (mDock.getVisibility() == VISIBLE) {
+        if (mDock.getVisibility() == VISIBLE && mDragger.getViewDragState() != STATE_DRAGGING) {
             super.onLayout(changed, l, t, r, b);
         } else {
             int marginTop= (int) TypedValue.applyDimension(
