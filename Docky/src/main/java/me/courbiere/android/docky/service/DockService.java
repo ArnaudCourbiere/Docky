@@ -164,6 +164,7 @@ public class DockService extends Service {
         mDockLayout = (DockLayout) inflater.inflate(R.layout.dock_layout, null);
         mDock = (RelativeLayout) mDockLayout.findViewById(R.id.dock);
         mItemList = (DragAndDropListView) mDockLayout.findViewById(R.id.dock_item_list);
+        mItemList.setFastScrollEnabled(true);
 
         final String[] from = new String[] {DockItemsContract.DockItems.ICON };
         final int[] to = new int[] { R.id.app_icon };

@@ -9,7 +9,7 @@
         android:id="@+id/dock"
         android:layout_width="@dimen/dock_width"
         android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="@dimen/dock_margin_top"
         android:layout_alignParentRight="true">
 
         <me.courbiere.android.draganddroplistview.DragAndDropListView
@@ -19,12 +19,12 @@
             android:choiceMode="none"
             android:orientation="vertical"
             android:divider="@android:color/transparent"
-            android:dividerHeight="15dp"
+            android:dividerHeight="@dimen/dock_list_divider_height"
             android:scrollbars="none"
             android:overScrollMode="never"
             android:clipToPadding="false"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:paddingTop="@dimen/dock_list_padding_top"
+            android:paddingBottom="@dimen/dock_list_padding_bottom"
             android:listSelector="@android:color/transparent"/>
 
     </RelativeLayout>

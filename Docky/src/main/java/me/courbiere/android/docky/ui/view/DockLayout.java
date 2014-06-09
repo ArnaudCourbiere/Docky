@@ -17,13 +17,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
 import me.courbiere.android.draganddroplistview.DragAndDropListView;
-
-import static me.courbiere.android.docky.util.LogUtils.*;
 
 /**
  * Dock Layout. This View is responsible for managing the dock positioning, it sits on top of every
@@ -91,11 +90,6 @@ public class DockLayout extends RelativeLayout {
      * Dock Layout width.
      */
     private final int mDockLayoutWidth;
-
-    /**
-     * Dock Layout height(used to restore layout width on unfold).
-     */
-    private int mDockLayoutHeight;
 
     /**
      * Dock view contained within the DockLayout.
@@ -255,13 +249,28 @@ public class DockLayout extends RelativeLayout {
         mDockItems.removeOnItemLongClickListener(mItemLongClickListener);
     }
 
-    /*
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        measureChild(mDock, widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(mDockLayoutWidth, mDock.getMeasuredHeight());
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+
+        final ListView dockItemList = (ListView) mDock.findViewById(R.id.dock_item_list);
+
+        if (dockItemList.getChildCount() > 0) {
+            final int dockMarginTop = (int) getResources().getDimension(R.dimen.dock_margin_top);
+            final int paddingTop = (int) getResources().getDimension(R.dimen.dock_list_padding_top);
+            final int paddingBottom = (int) getResources().getDimension(R.dimen.dock_list_padding_bottom);
+            final int testHeight = heightSize - (dockMarginTop + paddingTop + paddingBottom);
+
+            final int itemHeight = (int) getResources().getDimension(R.dimen.dock_item_height);
+            final int dividerHeight = (int) getResources().getDimension(R.dimen.dock_list_divider_height);
+
+            heightSize -= testHeight % (itemHeight + (dividerHeight / 2));
+            heightMeasureSpec = MeasureSpec.makeMeasureSpec(heightSize, heightMode);
+        }
+
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
-    */
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -449,7 +458,6 @@ public class DockLayout extends RelativeLayout {
      * Fold this DockLayout. This function is called when the dock has settled in closed position.
      */
     private void foldContainer() {
-        mDockLayoutHeight = getHeight(); // TODO: remove if not needed.
         final WindowManager.LayoutParams dockLayoutLp = (WindowManager.LayoutParams) getLayoutParams();
         dockLayoutLp.x = -mDock.getWidth();
         dockLayoutLp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
