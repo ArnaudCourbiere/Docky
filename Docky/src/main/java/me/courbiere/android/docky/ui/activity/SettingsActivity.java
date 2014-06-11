@@ -25,6 +25,7 @@ public class SettingsActivity extends Activity {
     public static final String PREFERENCES_STYLE = "preferences_style";
     public static final String PREFERENCES_DRAG_HANDLE_WIDTH = "preferences_drag_handle_width";
     public static final String PREFERENCES_START_DOCK_ON_BOOT = "preferences_start_dock_on_boot";
+    public static final String PREFERENCES_MAX_NUM_ITEMS = "preferences_max_num_items";
 
     /* Dock style constants (used to store style in preferences) */
     public static final String STYLE_WHITE = "STYLE_WHITE";

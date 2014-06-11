@@ -35,7 +35,7 @@ public class SettingsFragment extends PreferenceFragment
                 getPreferenceScreen().getSharedPreferences();
 
         setSummary(sharedPreferences, SettingsActivity.PREFERENCES_STYLE);
-        setSummary(sharedPreferences, SettingsActivity.PREFERENCES_DRAG_HANDLE_WIDTH);
+//        setSummary(sharedPreferences, SettingsActivity.PREFERENCES_DRAG_HANDLE_WIDTH);
         sharedPreferences.registerOnSharedPreferenceChangeListener(this);
     }
 

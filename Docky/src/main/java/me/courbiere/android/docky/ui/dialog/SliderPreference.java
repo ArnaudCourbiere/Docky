@@ -43,20 +43,20 @@ public class SliderPreference extends DialogPreference {
      */
     private int mCurrentValue;
 
-    public SliderPreference(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-
-        setDialogLayoutResource(R.layout.slider_preference);
-        setPositiveButtonText(android.R.string.ok);
-        setDialogIcon(null);
+    public SliderPreference(Context context) {
+        this(context, null);
     }
 
     public SliderPreference(Context context, AttributeSet attrs) {
         this(context, attrs, android.R.attr.preferenceStyle);
     }
 
-    public SliderPreference(Context context) {
-        this(context, null);
+    public SliderPreference(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+
+        setDialogLayoutResource(R.layout.slider_preference);
+        setPositiveButtonText(android.R.string.ok);
+        setDialogIcon(null);
     }
 
     /**

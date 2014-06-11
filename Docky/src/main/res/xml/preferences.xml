@@ -10,9 +10,15 @@
         android:entryValues="@array/dock_styles_values"
         android:defaultValue="@string/const_style_white"/>
 
-    <me.courbiere.android.docky.ui.dialog.SliderPreference
-        android:key="preferences_drag_handle_width"
-        android:title="@string/drag_handle_width"
-        android:summary="100%"
-        android:defaultValue="20"/>
+    <!--<me.courbiere.android.docky.ui.dialog.SliderPreference-->
+        <!--android:key="preferences_drag_handle_width"-->
+        <!--android:title="@string/drag_handle_width"-->
+        <!--android:summary="100%"-->
+        <!--android:defaultValue="20"/>-->
+
+    <me.courbiere.android.docky.ui.dialog.NumberPickerPreference
+        android:title="@string/preferences_number_items_title"
+        android:dialogMessage="@string/preferences_number_items_message"
+        android:key="preferences_max_num_items"/>
+
 </PreferenceScreen>

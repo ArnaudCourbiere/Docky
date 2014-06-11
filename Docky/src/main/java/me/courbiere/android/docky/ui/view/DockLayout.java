@@ -22,6 +22,7 @@ import android.widget.RelativeLayout;
 
 import me.courbiere.android.docky.R;
 import me.courbiere.android.docky.ui.activity.SettingsActivity;
+import me.courbiere.android.docky.ui.dialog.NumberPickerPreference;
 import me.courbiere.android.draganddroplistview.DragAndDropListView;
 
 /**
@@ -257,15 +258,22 @@ public class DockLayout extends RelativeLayout {
         final ListView dockItemList = (ListView) mDock.findViewById(R.id.dock_item_list);
 
         if (dockItemList.getChildCount() > 0) {
+            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
             final int dockMarginTop = (int) getResources().getDimension(R.dimen.dock_margin_top);
             final int paddingTop = (int) getResources().getDimension(R.dimen.dock_list_padding_top);
             final int paddingBottom = (int) getResources().getDimension(R.dimen.dock_list_padding_bottom);
-            final int testHeight = heightSize - (dockMarginTop + paddingTop + paddingBottom);
-
             final int itemHeight = (int) getResources().getDimension(R.dimen.dock_item_height);
             final int dividerHeight = (int) getResources().getDimension(R.dimen.dock_list_divider_height);
+            final int listHeight = heightSize - (dockMarginTop + paddingTop + paddingBottom);
+            final int averageItemHeight = itemHeight + dividerHeight;
+            final int maxNumberOfItems = Math.min(
+                    sp.getInt(SettingsActivity.PREFERENCES_MAX_NUM_ITEMS,
+                            NumberPickerPreference.DEFAULT_MAX_VALUE),
+                    listHeight / averageItemHeight);
 
-            heightSize -= testHeight % (itemHeight + (dividerHeight / 2));
+            heightSize = averageItemHeight * maxNumberOfItems
+                    + (dockMarginTop + paddingTop + paddingBottom + paddingBottom);
+
             heightMeasureSpec = MeasureSpec.makeMeasureSpec(heightSize, heightMode);
         }
 
