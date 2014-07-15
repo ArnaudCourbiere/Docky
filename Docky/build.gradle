@@ -6,19 +6,20 @@ buildscript {
         classpath 'com.android.tools.build:gradle:0.12.+'
     }
 }
-apply plugin: 'android'
+
+apply plugin: 'com.android.application'
 
 repositories {
     mavenCentral()
 }
 
 android {
-    compileSdkVersion 19
-    buildToolsVersion '19.1.0'
+    compileSdkVersion 20
+    buildToolsVersion '20.0.0'
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 19
+        targetSdkVersion 20
     }
 
     compileOptions {
@@ -39,7 +40,7 @@ android {
         buildTypes {
             release {
                 runProguard true
-                proguardFile getDefaultProguardFile('proguard-android.txt')
+                proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
                 zipAlign true
                 if (project.hasProperty('pass')) {
                     signingConfig signingConfigs.release
@@ -50,7 +51,7 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:19.1.+'
-    compile 'com.google.android.gms:play-services:4.3.+'
+    compile 'com.android.support:support-v4:20.0.0'
+    compile 'com.google.android.gms:play-services:5.0.+'
     compile project(':DragAndDropListView')
 }

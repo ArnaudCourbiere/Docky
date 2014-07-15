@@ -21,6 +21,8 @@
             android:divider="@android:color/transparent"
             android:dividerHeight="@dimen/dock_list_divider_height"
             android:scrollbars="none"
+            android:fastScrollAlwaysVisible="false"
+            android:fadeScrollbars="false"
             android:overScrollMode="never"
             android:clipToPadding="false"
             android:paddingTop="@dimen/dock_list_padding_top"

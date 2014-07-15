@@ -101,8 +101,10 @@ public class ManageItemsActivity extends FragmentActivity {
             case R.id.action_toggle_dock:
                 if (DockService.isRunning()) {
                     stopService(new Intent(this, DockService.class));
+                    item.setTitle(getString(R.string.start_dock));
                 } else {
                     startService(new Intent(this, DockService.class));
+                    item.setTitle(getString(R.string.stop_dock));
                 }
 
                 return true;
